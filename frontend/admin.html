@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f4f7fc">
+    <title>Организации — MyBuilding</title>
+    <link rel="preload" href="assets/fonts/onest-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="fonts.css?v=17">
+    <link rel="stylesheet" href="theme.css?v=17">
+    <link rel="stylesheet" href="components.css?v=17">
+    <link rel="stylesheet" href="dialog.css?v=17">
+    <link rel="stylesheet" href="auth.css?v=17">
+</head>
+
+<body class="admin-body">
+    <header class="admin-topbar">
+        <div class="admin-topbar__title">
+            <img src="assets/design_key.png" alt="" class="admin-logo">
+            <div>
+                <strong>Организации</strong>
+                <span id="org-count" class="admin-topbar__count"></span>
+            </div>
+        </div>
+        <div class="admin-topbar__actions">
+            <button class="btn btn--primary" id="add-org">
+                <svg class="icon icon--sm" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+                <span class="admin-hide-sm">Добавить</span>
+            </button>
+            <button class="btn btn--secondary" id="logout">
+                <svg class="icon icon--sm" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <path d="m16 17 5-5-5-5" />
+                    <path d="M21 12H9" />
+                </svg>
+                <span class="admin-hide-sm">Выйти</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        <div class="search admin-search">
+            <svg class="icon icon--sm search__icon" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input type="search" class="field search__input" id="search-org"
+                placeholder="Поиск по названию, почте, телефону…" autocomplete="off">
+        </div>
+
+        <div id="org-list" class="org-list"></div>
+    </main>
+
+    <!-- Форма организации: одна и та же для создания и правки -->
+    <div id="org-modal" class="dlg-root" hidden>
+        <div class="dlg dlg--wide" role="dialog" aria-modal="true">
+            <h3 class="dlg__title" id="org-modal-title">Новая организация</h3>
+
+            <form id="org-form" class="form" novalidate>
+                <div id="org-error" class="auth-error" hidden></div>
+
+                <div class="form-row">
+                    <label class="label" for="org-name">Название организации</label>
+                    <input class="field" type="text" id="org-name" required>
+                </div>
+
+                <div class="form-row">
+                    <label class="label" for="org-full-name">ФИО руководителя</label>
+                    <input class="field" type="text" id="org-full-name">
+                </div>
+
+                <div class="form-row form-row--split">
+                    <div>
+                        <label class="label" for="org-phone">Телефон</label>
+                        <input class="field" type="tel" id="org-phone" placeholder="+998 90 123 45 67">
+                    </div>
+                    <div>
+                        <label class="label" for="org-email">Почта</label>
+                        <input class="field" type="email" id="org-email" required>
+                    </div>
+                </div>
+
+                <div class="form-row form-row--split">
+                    <div>
+                        <label class="label" for="org-password">Пароль</label>
+                        <input class="field" type="text" id="org-password" autocomplete="new-password">
+                        <p class="settings-hint" id="password-hint">Минимум 4 символа</p>
+                    </div>
+                    <div>
+                        <label class="label" for="org-status">Статус</label>
+                        <select class="field" id="org-status">
+                            <option value="active">Активна</option>
+                            <option value="blocked">Заблокирована</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="label" for="org-logo">Логотип</label>
+                    <div class="org-logo-row">
+                        <div class="org-logo-preview" id="org-logo-preview"></div>
+                        <input class="field field--file" type="file" id="org-logo" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="dlg__actions">
+                    <button type="button" class="btn btn--secondary dlg__action" id="org-cancel">Отмена</button>
+                    <button type="submit" class="btn btn--primary dlg__action" id="org-save">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="dialog.js?v=17"></script>
+    <script src="admin.js?v=17"></script>
+</body>
+
+</html>

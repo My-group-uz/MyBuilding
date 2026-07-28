@@ -1,11 +1,13 @@
 
 # === Импорты и инициализация приложения ===
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Request
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import asyncpg
 import os
+
+import db
 import shutil
 import time
 from typing import List
@@ -15,6 +17,9 @@ import tempfile
 import subprocess
 import shutil
 
+import auth
+from auth_api import register_auth_routes
+
 app = FastAPI()
 DATABASE_URL = os.getenv("DATABASE_URL")
 UPLOAD_DIR = "uploads"
@@ -22,6 +27,78 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+register_auth_routes(app)
+
+
+# =====================================================================
+# ИЗОЛЯЦИЯ ДАННЫХ МЕЖДУ ОРГАНИЗАЦИЯМИ
+#
+# Проверка вынесена в middleware, а не расставлена по обработчикам:
+# маршрутов почти три десятка, и один забытый превратился бы в утечку
+# чужих данных. Здесь же по идентификатору из пути определяется
+# организация-владелец и сверяется с той, что в сессии.
+# =====================================================================
+
+# Открытые адреса: страница входа, сам вход, публичная ссылка, статика
+PUBLIC_PREFIXES = (
+    "/frontend/", "/uploads/", "/api/login", "/api/logout", "/api/me",
+    "/api/auth/", "/share/", "/health", "/favicon.ico",
+)
+
+# Какой сущности принадлежит идентификатор в пути
+PATH_OWNERS = [
+    (re.compile(r"^/objects/(\d+)"), "object"),
+    (re.compile(r"^/budget/stages/(\d+)"), "stage"),
+    (re.compile(r"^/budget/work-types/(\d+)"), "work_type"),
+    (re.compile(r"^/budget/resources/(\d+)"), "resource"),
+    (re.compile(r"^/expenses/(\d+)"), "expense"),
+]
+
+
+@app.middleware("http")
+async def tenant_guard(request: Request, call_next):
+    path = request.url.path
+
+    if path == "/" or any(path.startswith(p) for p in PUBLIC_PREFIXES):
+        return await call_next(request)
+
+    session = auth.read_session(request.cookies.get(auth.SESSION_COOKIE, ""))
+    if not session:
+        return JSONResponse({"detail": "Требуется вход"}, status_code=401)
+
+    # Суперадминистратор ходит только в свои маршруты: доступ к данным
+    # арендаторов ему не нужен и был бы лишним риском.
+    if session.get("role") == "superadmin":
+        if path.startswith("/api/admin/"):
+            return await call_next(request)
+        return JSONResponse({"detail": "Выберите организацию"}, status_code=403)
+
+    org_id = session.get("org_id")
+    request.state.org_id = org_id
+
+    async with app.state.db.acquire() as conn:
+        status = await conn.fetchval(
+            "SELECT status FROM organizations WHERE id=$1", org_id
+        )
+    if status != "active":
+        return JSONResponse({"detail": "Организация заблокирована"}, status_code=403)
+
+    # Сверяем владельца сущности из пути
+    for pattern, kind in PATH_OWNERS:
+        match = pattern.match(path)
+        if not match:
+            continue
+        owner = await auth.owner_org_id(app.state.db, kind, int(match.group(1)))
+        if owner is None:
+            return JSONResponse({"detail": "Не найдено"}, status_code=404)
+        if owner != org_id:
+            # 404, а не 403: иначе перебором идентификаторов можно
+            # узнать, какие объекты существуют у других организаций.
+            return JSONResponse({"detail": "Не найдено"}, status_code=404)
+        break
+
+    return await call_next(request)
 
 # === Модели для приходов ===
 class IncomeIn(BaseModel):
@@ -308,115 +385,33 @@ async def delete_income(object_id: int, income_id: int):
 
 # === API для объектов ===
 @app.on_event("startup")
-async def create_tables():
-    # Создаём pool для БД
-    app.state.db = await asyncpg.create_pool(DATABASE_URL)
-    
-    async with app.state.db.acquire() as connection:
-        # Таблица objects
-        await connection.execute("""
-            CREATE TABLE IF NOT EXISTS objects (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL
-            );
-        """)
-        # Ensure additional optional columns exist for Analysis metadata
-        # (start_date, end_date, area) - add if missing
-        await connection.execute("ALTER TABLE objects ADD COLUMN IF NOT EXISTS start_date DATE;")
-        await connection.execute("ALTER TABLE objects ADD COLUMN IF NOT EXISTS end_date DATE;")
-        await connection.execute("ALTER TABLE objects ADD COLUMN IF NOT EXISTS area NUMERIC(15,3) DEFAULT 0;")
-        
-        # Таблица budget_stages (этапы)
-        await connection.execute("""
-            CREATE TABLE IF NOT EXISTS budget_stages (
-                id SERIAL PRIMARY KEY,
-                object_id INTEGER NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
-                name TEXT NOT NULL,
-                order_index INTEGER NOT NULL DEFAULT 0,
-                collapsed BOOLEAN DEFAULT FALSE
-            );
-        """)
-        
-        # Таблица budget_work_types (виды работ)
-        await connection.execute("""
-            CREATE TABLE IF NOT EXISTS budget_work_types (
-                id SERIAL PRIMARY KEY,
-                stage_id INTEGER NOT NULL REFERENCES budget_stages(id) ON DELETE CASCADE,
-                name TEXT NOT NULL,
-                unit TEXT DEFAULT 'шт',
-                quantity NUMERIC(15,3) DEFAULT 0,
-                order_index INTEGER NOT NULL DEFAULT 0,
-                collapsed BOOLEAN DEFAULT FALSE
-            );
-        """)
-        
-        # Таблица budget_resources (ресурсы)
-        await connection.execute("""
-            CREATE TABLE IF NOT EXISTS budget_resources (
-                id SERIAL PRIMARY KEY,
-                work_type_id INTEGER NOT NULL REFERENCES budget_work_types(id) ON DELETE CASCADE,
-                photo TEXT,
-                resource_type TEXT NOT NULL,
-                name TEXT NOT NULL,
-                unit TEXT DEFAULT 'шт',
-                quantity NUMERIC(15,3) DEFAULT 0,
-                price NUMERIC(15,2) DEFAULT 0,
-                supplier TEXT,
-                order_index INTEGER NOT NULL DEFAULT 0
-            );
-        """)
-        
-        # Таблица resource_expenses (фактические расходы по ресурсам)
-        await connection.execute("""
-            CREATE TABLE IF NOT EXISTS resource_expenses (
-                id SERIAL PRIMARY KEY,
-                resource_id INTEGER NOT NULL REFERENCES budget_resources(id) ON DELETE CASCADE,
-                date DATE NOT NULL,
-                actual_quantity NUMERIC(15,3) NOT NULL,
-                actual_price NUMERIC(15,2) NOT NULL,
-                receipt_photo_1 TEXT,
-                receipt_photo_2 TEXT,
-                receipt_photo_3 TEXT,
-                comment TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-
-        # Таблица для фото, загружаемых в разделе Анализ
-        await connection.execute("""
-            CREATE TABLE IF NOT EXISTS object_analysis_photos (
-                id SERIAL PRIMARY KEY,
-                object_id INTEGER NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
-                file_path TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-        
-        # Таблица для share токенов (постоянные ссылки на объекты)
-        await connection.execute("""
-            CREATE TABLE IF NOT EXISTS share_tokens (
-                id SERIAL PRIMARY KEY,
-                object_id INTEGER NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
-                token TEXT UNIQUE NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-
+async def startup():
+    # Схема и миграции вынесены в db.py — там же индексы и CHECK-ограничения
+    app.state.db = await db.create_pool()
+    await db.init_schema(app.state.db)
 @app.on_event("shutdown")
 async def shutdown():
     await app.state.db.close()
 
 @app.get("/objects/")
-async def get_objects():
-    query = "SELECT id, name FROM objects ORDER BY id;"
+async def get_objects(request: Request):
+    # Список всегда ограничен организацией из сессии — это основная
+    # точка изоляции: middleware проверяет доступ к конкретному объекту,
+    # а здесь отсекается сам перечень.
+    org_id = getattr(request.state, "org_id", None)
+    query = "SELECT id, name FROM objects WHERE organization_id=$1 ORDER BY id;"
     async with app.state.db.acquire() as connection:
-        rows = await connection.fetch(query)
+        rows = await connection.fetch(query, org_id)
     return [{"id": row["id"], "name": row["name"]} for row in rows]
 
 
 @app.get('/objects/{object_id}')
 async def get_object(object_id: int):
-    query = "SELECT id, name, start_date, end_date, area FROM objects WHERE id=$1;"
+    query = """
+        SELECT id, name, customer, customer_phone, address,
+               start_date, end_date, area, contract_sum
+        FROM objects WHERE id=$1;
+    """
     async with app.state.db.acquire() as connection:
         row = await connection.fetchrow(query, object_id)
     if not row:
@@ -424,17 +419,24 @@ async def get_object(object_id: int):
     return {
         'id': row['id'],
         'name': row['name'],
+        'customer': row['customer'],
+        'customer_phone': row['customer_phone'],
+        'address': row['address'],
         'start_date': row['start_date'].isoformat() if row['start_date'] else None,
         'end_date': row['end_date'].isoformat() if row['end_date'] else None,
-        'area': float(row['area']) if row['area'] is not None else 0
+        'area': float(row['area']) if row['area'] is not None else 0,
+        'contract_sum': float(row['contract_sum']) if row['contract_sum'] is not None else 0
     }
 
 @app.post("/objects/")
-async def add_object(data: dict):
+async def add_object(data: dict, request: Request):
     name = data.get("name", "Новый объект")
-    query = "INSERT INTO objects (name) VALUES ($1) RETURNING id, name;"
+    # Организацию берём из сессии, а не из тела запроса: иначе можно
+    # было бы создать объект в чужой организации, подставив её id.
+    org_id = getattr(request.state, "org_id", None)
+    query = "INSERT INTO objects (name, organization_id) VALUES ($1, $2) RETURNING id, name;"
     async with app.state.db.acquire() as connection:
-        row = await connection.fetchrow(query, name)
+        row = await connection.fetchrow(query, name, org_id)
     return {"id": row["id"], "name": row["name"]}
 
 @app.put("/objects/{object_id}")
@@ -452,6 +454,16 @@ async def update_object(object_id: int, data: dict):
         fields.append(f"name=${idx}")
         params.append(data.get('name'))
         idx += 1
+    # Карточка заказчика и адрес. Пустая строка сохраняется как NULL,
+    # иначе в отчётах вместо прочерка появлялись бы пустые строки.
+    for key, column in (('customer', 'customer'),
+                        ('customerPhone', 'customer_phone'),
+                        ('address', 'address')):
+        if key in data or column in data:
+            value = data.get(key, data.get(column))
+            fields.append(f"{column}=${idx}")
+            params.append((value or '').strip() or None)
+            idx += 1
     if 'startDate' in data or 'start_date' in data:
         sd = data.get('startDate') or data.get('start_date')
         fields.append(f"start_date=${idx}")
@@ -469,6 +481,17 @@ async def update_object(object_id: int, data: dict):
             raise HTTPException(status_code=400, detail='Некорректная площадь')
         fields.append(f"area=${idx}")
         params.append(area)
+        idx += 1
+    if 'contractSum' in data or 'contract_sum' in data:
+        raw = data.get('contractSum', data.get('contract_sum'))
+        try:
+            contract_sum = float(raw or 0)
+        except Exception:
+            raise HTTPException(status_code=400, detail='Некорректная сумма договора')
+        if contract_sum < 0:
+            raise HTTPException(status_code=400, detail='Сумма договора не может быть отрицательной')
+        fields.append(f"contract_sum=${idx}")
+        params.append(contract_sum)
         idx += 1
 
     if not fields:
@@ -826,11 +849,17 @@ async def share_view(token: str):
 
 @app.get("/")
 async def root_redirect():
-    return RedirectResponse(url="/frontend/index.html")
+    # Вход, а не приложение: страница входа сама перенаправит дальше,
+    # если сессия уже есть. Обратный порядок показывал бы пустой
+    # интерфейс с ошибками 401.
+    return RedirectResponse(url="/frontend/login.html")
 
 # === Budget API ===
-exec(open("budget_api.py", encoding="utf-8").read())
+# Пути абсолютные: Railway запускает процесс не из папки проекта,
+# и относительный open() там не находит файл.
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+exec(open(os.path.join(_BASE_DIR, "budget_api.py"), encoding="utf-8").read())
 
 # === Expense API ===
-exec(open("expense_api.py", encoding="utf-8").read())
+exec(open(os.path.join(_BASE_DIR, "expense_api.py"), encoding="utf-8").read())
 

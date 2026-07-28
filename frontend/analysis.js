@@ -9,28 +9,22 @@ let analysisData = {
     resources: {},
     workTypes: []
 };
-// Collapsed state for sections: true = collapsed
-analysisData.collapsedSections = {
-    cards: true,
-    progress: true,
-    workTypes: true,
-    resources: true
-};
+// Состояния свёрнутости больше нет — все разделы раскрыты всегда.
 
 // Icons for resource types in Analysis (black stroke)
 const ANALYSIS_RESOURCE_ICONS = {
-    'Материал': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box-icon lucide-box"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
+    'Материал': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box-icon lucide-box"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
     'Доставка': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bus-icon lucide-bus"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>`,
-    'Инструменты': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-drill-icon lucide-drill"><path d="M10 18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a3 3 0 0 1-3-3 1 1 0 0 1 1-1z"/><path d="M13 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1l-.81 3.242a1 1 0 0 1-.97.758H8"/><path d="M14 4h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3"/><path d="M18 6h4"/><path d="m5 10-2 8"/><path d="m7 18 2-8"/></svg>`,
-    'Оборудование': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cable-icon lucide-cable"><path d="M17 19a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1z"/><path d="M17 21v-2"/><path d="M19 14V6.5a1 1 0 0 0-7 0v11a1 1 0 0 1-7 0V10"/><path d="M21 21v-2"/><path d="M3 5V3"/><path d="M4 10a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2z"/><path d="M7 5V3"/></svg>`,
-    'Питание': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-utensils-icon lucide-utensils"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>`,
-    'Коммуналка': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flame-kindling-icon lucide-flame-kindling"><path d="M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-.3 0-.6.1-.9a2 2 0 1 0 3.3-2C8 4.5 11 2 12 2Z"/><path d="m5 22 14-4"/><path d="m5 18 14 4"/></svg>`,
-    'Документация': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
+    'Инструменты': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-drill-icon lucide-drill"><path d="M10 18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a3 3 0 0 1-3-3 1 1 0 0 1 1-1z"/><path d="M13 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1l-.81 3.242a1 1 0 0 1-.97.758H8"/><path d="M14 4h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3"/><path d="M18 6h4"/><path d="m5 10-2 8"/><path d="m7 18 2-8"/></svg>`,
+    'Оборудование': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cable-icon lucide-cable"><path d="M17 19a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1z"/><path d="M17 21v-2"/><path d="M19 14V6.5a1 1 0 0 0-7 0v11a1 1 0 0 1-7 0V10"/><path d="M21 21v-2"/><path d="M3 5V3"/><path d="M4 10a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2z"/><path d="M7 5V3"/></svg>`,
+    'Питание': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-utensils-icon lucide-utensils"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>`,
+    'Коммуналка': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flame-kindling-icon lucide-flame-kindling"><path d="M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-.3 0-.6.1-.9a2 2 0 1 0 3.3-2C8 4.5 11 2 12 2Z"/><path d="m5 22 14-4"/><path d="m5 18 14 4"/></svg>`,
+    'Документация': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
     'Расходные материалы': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paint-roller-icon lucide-paint-roller"><rect width="16" height="6" x="2" y="2" rx="2"/><path d="M10 16v-2a2 2 0 0 1 2-2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="4" height="6" x="8" y="16" rx="1"/></svg>`,
-    'Трудоресурсы': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hard-hat-icon lucide-hard-hat"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg>`,
-    'Мебель': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-armchair-icon lucide-armchair"><path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M5 18v2"/><path d="M19 18v2"/></svg>`
+    'Трудоресурсы': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hard-hat-icon lucide-hard-hat"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg>`,
+    'Мебель': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-armchair-icon lucide-armchair"><path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M5 18v2"/><path d="M19 18v2"/></svg>`
     ,
-    'Техника': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tractor-icon lucide-tractor"><path d="m10 11 11 .9a1 1 0 0 1 .8 1.1l-.665 4.158a1 1 0 0 1-.988.842H20"/><path d="M16 18h-5"/><path d="M18 5a1 1 0 0 0-1 1v5.573"/><path d="M3 4h8.129a1 1 0 0 1 .99.863L13 11.246"/><path d="M4 11V4"/><path d="M7 15h.01"/><path d="M8 10.1V4"/><circle cx="18" cy="18" r="2"/><circle cx="7" cy="15" r="5"/></svg>`
+    'Техника': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tractor-icon lucide-tractor"><path d="m10 11 11 .9a1 1 0 0 1 .8 1.1l-.665 4.158a1 1 0 0 1-.988.842H20"/><path d="M16 18h-5"/><path d="M18 5a1 1 0 0 0-1 1v5.573"/><path d="M3 4h8.129a1 1 0 0 1 .99.863L13 11.246"/><path d="M4 11V4"/><path d="M7 15h.01"/><path d="M8 10.1V4"/><circle cx="18" cy="18" r="2"/><circle cx="7" cy="15" r="5"/></svg>`
 };
 
 // Загрузка данных для анализа
@@ -56,8 +50,32 @@ async function loadAnalysis(objectId) {
 
         // Рассчитываем показатели
         calculateAnalysis(budgetData, incomeData, expenseData);
-        // Загрузим сохранённые фото для этого объекта
+
+        // Площадь нужна для цены за м². Раньше она попадала сюда вместе
+        // с блоком «Данные объекта»; тот переехал в «Настройки», поэтому
+        // тянем её отдельно — иначе цена за м² была бы нулевой, пока
+        // пользователь не заглянет в настройки.
+        try {
+            const objRes = await fetch(`/objects/${objectId}`);
+            if (objRes.ok) {
+                const obj = await objRes.json();
+                analysisData.area = parseFloat(obj.area) || 0;
+                analysisData.startDate = obj.start_date || null;
+                analysisData.endDate = obj.end_date || null;
+                // Паспорт объекта — правая колонка витрины
+                analysisData.objectName = obj.name || 'Объект';
+                analysisData.customer = obj.customer || '';
+                analysisData.customerPhone = obj.customer_phone || '';
+                analysisData.address = obj.address || '';
+                analysisData.contractSum = parseFloat(obj.contract_sum) || 0;
+            }
+        } catch (e) {
+            console.warn('Не удалось получить площадь объекта', e);
+        }
+
+        // Рендеры нужны витрине наверху вкладки
         await loadAnalysisPhotos(objectId);
+
         renderAnalysis();
     } catch (err) {
         console.error('Error loading analysis:', err);
@@ -195,6 +213,157 @@ function calculateResourcesByType(budgetData, expenseData) {
 }
 
 // Рендеринг анализа
+/* =====================================================================
+   ВИТРИНА ОБЪЕКТА (слайдер рендеров в «Аналитике»)
+
+   Одно большое изображение с названием объекта поверх. Если рендеров
+   несколько — они сменяются каждые 3 секунды, а снизу идёт полоска,
+   показывающая, сколько осталось до следующего кадра.
+   ===================================================================== */
+
+const HERO_INTERVAL_MS = 3000;
+let heroTimer = null;
+let heroIndex = 0;
+
+function heroPhotos() {
+    return (analysisData.analysisPhotos || []).filter(p => p && p.url);
+}
+
+// Строка значения в карточке объекта. Пустые поля показываем прочерком,
+// а не прячем: иначе строки съезжают и карточка «прыгает» между объектами.
+function heroFact(label, value, href) {
+    const empty = value === null || value === undefined || String(value).trim() === '';
+    const text = empty ? '—' : escapeHtml(value);
+    const body = (!empty && href)
+        ? `<a class="hero-facts__value hero-facts__value--link" href="${escapeHtml(href)}">${text}</a>`
+        : `<span class="hero-facts__value ${empty ? 'is-empty' : ''}">${text}</span>`;
+
+    return `
+        <div class="hero-facts__row">
+            <span class="hero-facts__label">${escapeHtml(label)}</span>
+            ${body}
+        </div>
+    `;
+}
+
+function renderHeroSlider() {
+    const photos = heroPhotos();
+    const name = analysisData.objectName || 'Объект';
+    const phone = analysisData.customerPhone;
+    const area = parseFloat(analysisData.area || 0) || 0;
+    const contract = parseFloat(analysisData.contractSum || 0) || 0;
+
+    // --- Левая колонка: рендеры ---
+    let media;
+    if (photos.length === 0) {
+        media = `
+            <div class="hero__media hero__media--empty">
+                <p class="hero__hint">Добавьте фоторендеры<br>во вкладке «Настройки»</p>
+            </div>
+        `;
+    } else {
+        const slides = photos.map((p, i) => `
+            <div class="hero__slide ${i === 0 ? 'active' : ''}" data-i="${i}"
+                 style="background-image:url('${p.url}')"></div>
+        `).join('');
+
+        // Полоска прогресса нужна только когда есть что перелистывать
+        const progress = photos.length > 1
+            ? `<div class="hero__progress"><span class="hero__progress-fill"></span></div>`
+            : '';
+
+        media = `
+            <div class="hero__media" id="hero" data-count="${photos.length}">
+                <div class="hero__slides">${slides}</div>
+                <div class="hero__scrim"></div>
+                <div class="hero__caption">
+                    <h1 class="hero__title">${escapeHtml(name)}</h1>
+                </div>
+                ${progress}
+            </div>
+        `;
+    }
+
+    // --- Правая колонка: паспорт объекта ---
+    // tel: только из цифр и «+» — пробелы и скобки ломают ссылку.
+    const telHref = phone ? 'tel:' + String(phone).replace(/[^\d+]/g, '') : null;
+
+    return `
+        <section class="hero">
+            ${media}
+            <div class="hero-facts">
+                <h2 class="hero-facts__name">${escapeHtml(name)}</h2>
+                ${heroFact('Заказчик', analysisData.customer)}
+                ${heroFact('Телефон', phone, telHref)}
+                ${heroFact('Адрес', analysisData.address)}
+                ${heroFact('Площадь', area > 0 ? `${formatNum(area)} м²` : '')}
+                ${heroFact('Сумма договора', contract > 0 ? `${formatNum(contract)} сум` : '')}
+
+                <div class="hero-prices">
+                    <div class="hero-price">
+                        <span class="hero-price__label">Цена / м² (план)</span>
+                        <span class="hero-price__value" id="price-plan-value">0 сум</span>
+                    </div>
+                    <div class="hero-price">
+                        <span class="hero-price__label">Цена / м² (факт)</span>
+                        <span class="hero-price__value hero-price__value--fact" id="price-fact-value">0 сум</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+// Запускает смену кадров. Вызывается после каждой отрисовки —
+// поэтому первым делом гасит предыдущий таймер, иначе после нескольких
+// переходов между вкладками кадры начали бы мигать наперегонки.
+function startHeroSlider() {
+    stopHeroSlider();
+
+    const hero = document.getElementById('hero');
+    if (!hero) return;
+
+    const slides = [...hero.querySelectorAll('.hero__slide')];
+    if (slides.length < 2) return;
+
+    const fill = hero.querySelector('.hero__progress-fill');
+    heroIndex = 0;
+
+    const advance = () => {
+        slides[heroIndex].classList.remove('active');
+        heroIndex = (heroIndex + 1) % slides.length;
+        slides[heroIndex].classList.add('active');
+        restartProgress();
+    };
+
+    // Перезапуск анимации полоски: смена класса не сбрасывает уже
+    // идущую анимацию, нужен принудительный reflow.
+    const restartProgress = () => {
+        if (!fill) return;
+        fill.style.animation = 'none';
+        void fill.offsetWidth;
+        fill.style.animation = '';
+    };
+
+    restartProgress();
+    heroTimer = setInterval(advance, HERO_INTERVAL_MS);
+}
+
+function stopHeroSlider() {
+    if (heroTimer) {
+        clearInterval(heroTimer);
+        heroTimer = null;
+    }
+}
+
+window.stopHeroSlider = stopHeroSlider;
+
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+}
+
 function renderAnalysis() {
     const container = document.getElementById('analysis-container');
     if (!container) return;
@@ -203,54 +372,18 @@ function renderAnalysis() {
     if (!analysisData.analysisPhotos) analysisData.analysisPhotos = [null, null, null, null];
 
     container.innerHTML = `
-        <!-- Данные объекта -->
-        <div class="analysis-object-section">
-            <h2 class="analysis-section-title">Данные объекта</h2>
-            <div class="analysis-object-header">
-                <div class="object-name-wrap"><span id="object-name" class="object-name editable">Объект</span></div>
-                <div class="object-quick-params">
-                    <label>Общая площадь (м²)<br><input type="number" id="obj-area" min="0" step="0.01" value="0" oninput="onObjectFieldChange()"></label>
-                    <label>Дата начала<br><input type="date" id="obj-start-date" onchange="onObjectFieldChange()"></label>
-                    <label>Дата окончания<br><input type="date" id="obj-end-date" onchange="onObjectFieldChange()"></label>
-                </div>
-            </div>
+        <!-- Витрина объекта: рендеры сменяются каждые 3 секунды,
+             название лежит поверх изображения. Загружаются они
+             во вкладке «Настройки». -->
+        ${renderHeroSlider()}
 
-            <div class="analysis-object-photos">
-                ${renderImageUploadGrid()}
-            </div>
-
-            <div class="analysis-object-params">
-                <div class="object-param-row prices-row">
-                            <div class="price-m2-section" style="width:100%">
-                                <div class="analysis-progress-item">
-                                    <div class="analysis-progress-header">
-                                        <span class="analysis-progress-label">Цена / м² (план)</span>
-                                        <span class="analysis-progress-value" id="price-plan-value">0 сум</span>
-                                    </div>
-                                    <div class="analysis-progress-bar-container">
-                                        <div class="analysis-progress-bar neutral" id="price-plan-bar" style="width:0%"> </div>
-                                    </div>
-                                </div>
-
-                                <div class="analysis-progress-item">
-                                    <div class="analysis-progress-header">
-                                        <span class="analysis-progress-label">Цена / м² (факт)</span>
-                                        <span class="analysis-progress-value" id="price-fact-value">0 сум</span>
-                                    </div>
-                                    <div class="analysis-progress-bar-container">
-                                        <div class="analysis-progress-bar" id="price-fact-bar" style="width:0%"> </div>
-                                    </div>
-                                </div>
-                            </div>
-                </div>
-            </div>
-        </div>
+        <!-- Цена за м² переехала в правую колонку витрины: она относится
+             к паспорту объекта, а не к финансовой аналитике ниже. -->
 
         <!-- Финансовые карточки (collapsible) -->
-        <div class="analysis-collapsible ${analysisData.collapsedSections.cards ? 'collapsed' : ''}" data-section="cards">
-            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('cards')">
+        <div class="analysis-collapsible" data-section="cards">
+            <div class="analysis-collapsible-header">
                 <span class="analysis-section-title">Аналитика по финансам</span>
-                <button class="collapser">${analysisData.collapsedSections.cards ? '+' : '−'}</button>
             </div>
             <div class="analysis-collapsible-body">
                 <div class="analysis-cards-grid single-row">
@@ -275,10 +408,9 @@ function renderAnalysis() {
         </div>
 
         <!-- Прогресс-бары (collapsible) -->
-        <div class="analysis-collapsible ${analysisData.collapsedSections.progress ? 'collapsed' : ''}" data-section="progress">
-            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('progress')">
+        <div class="analysis-collapsible" data-section="progress">
+            <div class="analysis-collapsible-header">
                 <span class="analysis-section-title">Аналитика по финансам (прогресс-бары)</span>
-                <button class="collapser">${analysisData.collapsedSections.progress ? '+' : '−'}</button>
             </div>
             <div class="analysis-collapsible-body">
                 ${renderProgressBars()}
@@ -286,10 +418,9 @@ function renderAnalysis() {
         </div>
 
         <!-- План/Факт по видам работ (collapsible) -->
-        <div class="analysis-collapsible ${analysisData.collapsedSections.workTypes ? 'collapsed' : ''}" data-section="workTypes">
-            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('workTypes')">
+        <div class="analysis-collapsible" data-section="workTypes">
+            <div class="analysis-collapsible-header">
                 <span class="analysis-section-title">План/Факт по видам работ</span>
-                <button class="collapser">${analysisData.collapsedSections.workTypes ? '+' : '−'}</button>
             </div>
             <div class="analysis-collapsible-body">
                 ${renderWorkTypesComparison()}
@@ -297,10 +428,9 @@ function renderAnalysis() {
         </div>
 
         <!-- По типам ресурсов (collapsible) -->
-        <div class="analysis-collapsible ${analysisData.collapsedSections.resources ? 'collapsed' : ''}" data-section="resources">
-            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('resources')">
+        <div class="analysis-collapsible" data-section="resources">
+            <div class="analysis-collapsible-header">
                 <span class="analysis-section-title">Аналитика по типам ресурсов</span>
-                <button class="collapser">${analysisData.collapsedSections.resources ? '+' : '−'}</button>
             </div>
             <div class="analysis-collapsible-body">
                 <div class="analysis-resources-section">
@@ -312,75 +442,13 @@ function renderAnalysis() {
         </div>
     `;
 
-    // Populate area-derived values if inputs already exist and attach inline editing
-    setTimeout(async () => {
-        const areaInput = document.getElementById('obj-area');
-        if (areaInput) areaInput.value = analysisData.area || 0;
-        const start = document.getElementById('obj-start-date');
-        if (start && analysisData.startDate) start.value = analysisData.startDate;
-        const end = document.getElementById('obj-end-date');
-        if (end && analysisData.endDate) end.value = analysisData.endDate;
-
-        // Load object metadata (name etc.) from server if available
-        if (analysisData.objectId) {
-            try {
-                const res = await fetch(`/objects/${analysisData.objectId}`);
-                if (res.ok) {
-                    const obj = await res.json();
-                    const nameEl = document.getElementById('object-name');
-                    if (nameEl) nameEl.textContent = obj.name || 'Объект';
-                    if (areaInput && (obj.area !== undefined && obj.area !== null)) {
-                        areaInput.value = obj.area;
-                        analysisData.area = parseFloat(obj.area) || 0;
-                    }
-                    if (start && obj.start_date) {
-                        start.value = obj.start_date;
-                        analysisData.startDate = obj.start_date;
-                    }
-                    if (end && obj.end_date) {
-                        end.value = obj.end_date;
-                        analysisData.endDate = obj.end_date;
-                    }
-                    // attach inline edit behaviour for object name (reuse makeEditable from budget.js if present)
-                    const nameElem = document.getElementById('object-name');
-                    if (nameElem) {
-                        if (typeof makeEditable === 'function') {
-                            makeEditable(nameElem, async (newValue) => {
-                                // save to server
-                                await fetch(`/objects/${analysisData.objectId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newValue }) });
-                                // update sidebar item text if selected
-                                const sel = document.querySelector('#object-list li.selected');
-                                if (sel) sel.textContent = newValue;
-                            });
-                        } else {
-                            // fallback simple inline edit
-                            nameElem.onclick = () => {
-                                const cur = nameElem.textContent;
-                                const input = document.createElement('input');
-                                input.type = 'text'; input.value = cur; input.className = 'inline-edit-input';
-                                input.onblur = async () => {
-                                    const nv = input.value.trim() || cur;
-                                    await fetch(`/objects/${analysisData.objectId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: nv }) });
-                                    nameElem.textContent = nv;
-                                    const sel = document.querySelector('#object-list li.selected'); if (sel) sel.textContent = nv;
-                                };
-                                input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); else if (e.key === 'Escape') { nameElem.textContent = cur; } };
-                                nameElem.textContent = ''; nameElem.appendChild(input); input.focus(); input.select();
-                            };
-                        }
-                    }
-                    // ensure price bars reflect loaded area immediately
-                    updatePricePerM2();
-                }
-            } catch (err) {
-                console.warn('Could not fetch object metadata', err);
-            }
-        }
-
+    // Пересчёт цены за м² после отрисовки. Поля площади и сроков
+    // теперь живут во вкладке «Настройки» — их обработчики в settings.js.
+    setTimeout(() => {
         updatePricePerM2();
+        startHeroSlider();
     }, 0);
 }
-
 // Helper: load analysis photos from server
 async function loadAnalysisPhotos(objectId) {
     try {
@@ -415,6 +483,18 @@ function renderImageUploadGrid() {
     }).join('');
 }
 
+// Сетка фото отрисовывается вкладкой «Настройки», но обработчики
+// остались здесь вместе с остальной работой с analysisData.
+// Перерисовываем именно ту вкладку, где сетка сейчас находится —
+// иначе загруженное фото не появлялось бы до перехода между вкладками.
+function refreshPhotoGrid() {
+    if (typeof renderSettings === 'function' && document.getElementById('settings-container')) {
+        renderSettings();
+    } else {
+        renderAnalysis();
+    }
+}
+
 // Image handlers
 function onImageSelected(event, idx) {
     const file = event.target.files && event.target.files[0];
@@ -430,7 +510,7 @@ function onImageSelected(event, idx) {
                 if (data && data.url) {
                     // store as object with id
                     analysisData.analysisPhotos[idx] = { id: data.id, url: data.url };
-                    renderAnalysis();
+                    refreshPhotoGrid();
                 }
             })
             .catch(err => {
@@ -439,7 +519,7 @@ function onImageSelected(event, idx) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     analysisData.analysisPhotos[idx] = { id: null, url: e.target.result };
-                    renderAnalysis();
+                    refreshPhotoGrid();
                 };
                 reader.readAsDataURL(file);
             });
@@ -447,7 +527,7 @@ function onImageSelected(event, idx) {
         const reader = new FileReader();
         reader.onload = function (e) {
             analysisData.analysisPhotos[idx] = { id: null, url: e.target.result };
-            renderAnalysis();
+            refreshPhotoGrid();
         };
         reader.readAsDataURL(file);
     }
@@ -463,14 +543,14 @@ function removeImageFromSlot(event, idx) {
             .then(res => {
                 if (res.ok) {
                     analysisData.analysisPhotos[idx] = null;
-                    renderAnalysis();
+                    refreshPhotoGrid();
                 } else {
-                    alert('Не удалось удалить фото на сервере');
+                    uiAlert('Не удалось удалить фото на сервере');
                 }
-            }).catch(err => { console.error(err); alert('Ошибка удаления'); });
+            }).catch(err => { console.error(err); uiAlert('Ошибка удаления'); });
     } else {
         analysisData.analysisPhotos[idx] = null;
-        renderAnalysis();
+        refreshPhotoGrid();
     }
 }
 
@@ -478,10 +558,7 @@ function viewImageFromSlot(event, idx) {
     event.stopPropagation();
     const item = analysisData.analysisPhotos[idx];
     if (!item || !item.url) return;
-    const modal = document.getElementById('photo-modal');
-    const modalImg = document.getElementById('photo-modal-img');
-    modalImg.src = item.url;
-    modal.style.display = 'flex';
+    openPhotoViewer(item.url);
 }
 
 function onPreviewClick(event, idx) {
@@ -491,12 +568,25 @@ function onPreviewClick(event, idx) {
 }
 
 function onObjectFieldChange() {
-    const area = parseFloat(document.getElementById('obj-area').value || 0);
-    const start = document.getElementById('obj-start-date').value;
-    const end = document.getElementById('obj-end-date').value;
+    // Поля живут во вкладке «Настройки» — читаем только те, что есть в DOM
+    const value = (id) => document.getElementById(id)?.value ?? '';
+
+    const area = parseFloat(value('obj-area') || 0) || 0;
+    // Сумма договора приходит с пробелами-разделителями — чистим
+    const contractSum = parseFloat(String(value('obj-contract-sum')).replace(/\s/g, '')) || 0;
+    const start = value('obj-start-date');
+    const end = value('obj-end-date');
+    const customer = value('obj-customer');
+    const customerPhone = value('obj-customer-phone');
+    const address = value('obj-address');
+
     analysisData.area = area;
+    analysisData.contractSum = contractSum;
     analysisData.startDate = start;
     analysisData.endDate = end;
+    analysisData.customer = customer;
+    analysisData.customerPhone = customerPhone;
+    analysisData.address = address;
     updatePricePerM2();
 
     // Persist these fields to server (partial update)
@@ -504,7 +594,15 @@ function onObjectFieldChange() {
         fetch(`/objects/${analysisData.objectId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ startDate: start || null, endDate: end || null, area: area })
+            body: JSON.stringify({
+                startDate: start || null,
+                endDate: end || null,
+                area: area,
+                contractSum: contractSum,
+                customer: customer,
+                customerPhone: customerPhone,
+                address: address
+            })
         }).then(res => {
             if (!res.ok) console.warn('Failed to save object fields');
         }).catch(err => console.error('Save object fields error', err));
@@ -546,517 +644,265 @@ function updatePricePerM2() {
 function svgIcon(name) {
     switch (name) {
         case 'income':
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>`;
         case 'expense':
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>`;
         case 'balance':
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>`;
         case 'overrun':
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"/><path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/><path d="m2 16 6 6"/><circle cx="16" cy="9" r="2.9"/><circle cx="6" cy="5" r="3"/></svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"/><path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/><path d="m2 16 6 6"/><circle cx="16" cy="9" r="2.9"/><circle cx="6" cy="5" r="3"/></svg>`;
         default:
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#000" stroke-width="1.5"/></svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/></svg>`;
     }
 }
 
 // Export current analysis as a complete HTML report in new tab with all styles and images
+/* =====================================================================
+   ВЫГРУЗКА ОТЧЁТА «АНАЛИТИКА»
+
+   Раньше отчёт клонировал разметку экрана. Экранная вёрстка построена
+   на карточках и сетках: на бумаге они превращались в полупустые
+   прямоугольники, столбчатые диаграммы печатались без столбиков,
+   а название объекта повторялось трижды. Пустой объект занимал
+   четыре страницы.
+
+   Здесь документ собирается заново из данных: таблицы вместо карточек,
+   ничего лишнего. Нулевые разделы не печатаются вовсе.
+   ===================================================================== */
+
+function reportRow(label, value) {
+    const empty = value === null || value === undefined || String(value).trim() === '';
+    return `
+        <tr>
+            <th scope="row">${escapeHtml(label)}</th>
+            <td>${empty ? '—' : escapeHtml(value)}</td>
+        </tr>
+    `;
+}
+
+function reportMoney(value) {
+    return `${formatNum(value || 0)} сум`;
+}
+
+// Сводка по финансам — таблица, а не четыре карточки в ряд
+function reportSummary() {
+    return `
+        <section class="rep-section">
+            <h2>Финансы</h2>
+            <table class="rep-table rep-table--figures">
+                <tbody>
+                    <tr>
+                        <th scope="row">Бюджет (план)</th>
+                        <td class="text-right">${reportMoney(analysisData.budget)}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Приход</th>
+                        <td class="text-right">${reportMoney(analysisData.income)}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Расход (факт)</th>
+                        <td class="text-right">${reportMoney(analysisData.expense)}</td>
+                    </tr>
+                    <tr class="rep-total">
+                        <th scope="row">Остаток</th>
+                        <td class="text-right ${analysisData.balance < 0 ? 'over-budget' : ''}">
+                            ${reportMoney(analysisData.balance)}
+                        </td>
+                    </tr>
+                    <tr class="rep-total">
+                        <th scope="row">${analysisData.overrun < 0 ? 'Перерасход' : 'Экономия'}</th>
+                        <td class="text-right ${analysisData.overrun < 0 ? 'over-budget' : ''}">
+                            ${reportMoney(Math.abs(analysisData.overrun))}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    `;
+}
+
+// План/факт по видам работ. Показываем все заведённые виды работ,
+// включая нулевые: нулевой факт при ненулевом плане — это тоже
+// информация, а не пустая строка.
+function reportWorkTypes() {
+    const rows = analysisData.workTypes || [];
+    if (rows.length === 0) return '';
+
+    const wtPlan = rows.reduce((s, wt) => s + (wt.plan || 0), 0);
+    const wtFact = rows.reduce((s, wt) => s + (wt.fact || 0), 0);
+    const wtDiff = wtPlan - wtFact;
+
+    return `
+        <section class="rep-section">
+            <h2>План / факт по видам работ</h2>
+            <table class="rep-table">
+                <thead>
+                    <tr>
+                        <th>Этап</th>
+                        <th>Вид работ</th>
+                        <th class="text-right">План</th>
+                        <th class="text-right">Факт</th>
+                        <th class="text-right">Отклонение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.map(wt => {
+                        const diff = (wt.plan || 0) - (wt.fact || 0);
+                        return `
+                            <tr>
+                                <td>${escapeHtml(wt.stageName || '')}</td>
+                                <td>${escapeHtml(wt.name || '')}</td>
+                                <td class="text-right">${reportMoney(wt.plan)}</td>
+                                <td class="text-right">${reportMoney(wt.fact)}</td>
+                                <td class="text-right ${diff < 0 ? 'over-budget' : ''}">
+                                    ${diff < 0 ? '−' : ''}${formatNum(Math.abs(diff))}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                    <tr class="rep-total">
+                        <td colspan="2">Итого</td>
+                        <td class="text-right">${reportMoney(wtPlan)}</td>
+                        <td class="text-right">${reportMoney(wtFact)}</td>
+                        <td class="text-right ${wtDiff < 0 ? 'over-budget' : ''}">
+                            ${wtDiff < 0 ? '−' : ''}${formatNum(Math.abs(wtDiff))}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    `;
+}
+
+// По типам ресурсов — таблицей. На экране это столбчатые диаграммы,
+// но на бумаге столбик высотой в ноль бесполезен, а число читается.
+//
+// Печатаем ВСЕ типы, включая нулевые: список фиксированный, и по нему
+// сверяют, что ничего не забыли заложить в бюджет. Отсутствующая
+// строка «Мебель» читалась бы как «раздела нет», а не как «ноль».
+function reportResources() {
+    const entries = Object.entries(analysisData.resources || {});
+    if (entries.length === 0) return '';
+
+    const totalPlan = entries.reduce((s, [, v]) => s + (v.plan || 0), 0);
+    const totalFact = entries.reduce((s, [, v]) => s + (v.fact || 0), 0);
+    const totalDiff = totalPlan - totalFact;
+
+    return `
+        <section class="rep-section">
+            <h2>По типам ресурсов</h2>
+            <table class="rep-table">
+                <thead>
+                    <tr>
+                        <th>Тип ресурса</th>
+                        <th class="text-right">План</th>
+                        <th class="text-right">Факт</th>
+                        <th class="text-right">Отклонение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${entries.map(([name, v]) => {
+                        const diff = (v.plan || 0) - (v.fact || 0);
+                        const zero = (v.plan || 0) === 0 && (v.fact || 0) === 0;
+                        return `
+                            <tr class="${zero ? 'rep-zero' : ''}">
+                                <td>${escapeHtml(name)}</td>
+                                <td class="text-right">${reportMoney(v.plan)}</td>
+                                <td class="text-right">${reportMoney(v.fact)}</td>
+                                <td class="text-right ${diff < 0 ? 'over-budget' : ''}">
+                                    ${diff < 0 ? '−' : ''}${formatNum(Math.abs(diff))}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                    <tr class="rep-total">
+                        <td>Итого</td>
+                        <td class="text-right">${reportMoney(totalPlan)}</td>
+                        <td class="text-right">${reportMoney(totalFact)}</td>
+                        <td class="text-right ${totalDiff < 0 ? 'over-budget' : ''}">
+                            ${totalDiff < 0 ? '−' : ''}${formatNum(Math.abs(totalDiff))}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    `;
+}
+
 function exportAnalysisReport() {
-    // Client-side export: open HTML in new window and print (no server call)
-    const content = document.getElementById('analysis-container');
-    if (!content) {
-        alert('Нет данных для экспорта');
+    if (!analysisData.objectId) {
+        uiAlert('Сначала выберите объект');
         return;
     }
 
-    // Clone the content to manipulate it without affecting the original
-    const clonedContent = content.cloneNode(true);
+    const name = analysisData.objectName || 'Объект';
+    const area = parseFloat(analysisData.area || 0) || 0;
+    const contract = parseFloat(analysisData.contractSum || 0) || 0;
 
-    // Remove interactive elements (buttons, inputs for editing)
-    const interactiveElements = clonedContent.querySelectorAll('.photo-overlay, input[type="file"], .collapser');
-    interactiveElements.forEach(el => el.remove());
-
-    // Expand all collapsed sections
-    const collapsedSections = clonedContent.querySelectorAll('.analysis-collapsible');
-    collapsedSections.forEach(section => {
-        section.classList.remove('collapsed');
-    });
-
-    // Remove collapse headers (make them static titles)
-    const collapseHeaders = clonedContent.querySelectorAll('.analysis-collapsible-header');
-    collapseHeaders.forEach(header => {
-        header.style.cursor = 'default';
-        header.onclick = null;
-    });
-
-    // Make inputs read-only and style them as text
-    const inputs = clonedContent.querySelectorAll('input[type="number"], input[type="date"]');
-    inputs.forEach(input => {
-        const span = document.createElement('span');
-        span.textContent = input.value || '—';
-        span.style.cssText = 'font-weight: 600; color: #333;';
-        input.parentNode.replaceChild(span, input);
-    });
-
-    // Object name (if selected in sidebar)
-    const objectName = document.querySelector('#object-list li.selected')?.textContent.trim() || 'Объект';
     const now = new Date();
     const dateStr = now.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
-    // Comprehensive CSS styles for print
-    const styles = `
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif;
-            padding: 30px;
-            background: #fff;
-            color: #222;
-            line-height: 1.6;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #0067c0;
-        }
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            color: #0067c0;
-            margin-bottom: 10px;
-        }
-        .header p {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        /* Analysis Container */
-        #analysis-container {
-            padding: 0;
-        }
-        
-        /* Object Section */
-        .analysis-object-section {
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-        }
-        
-        .analysis-section-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        
-        .analysis-object-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .object-name {
-            font-size: 22px;
-            font-weight: 700;
-            color: #222;
-        }
-        
-        .object-quick-params {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        
-        .object-quick-params label {
-            font-size: 13px;
-            color: #444;
-            font-weight: 600;
-        }
-        
-        /* Photos */
-        .analysis-object-photos {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .photo-slot {
-            flex: 1 1 calc(25% - 15px);
-            min-width: 150px;
-        }
-        
-        .photo-preview {
-            width: 100%;
-            height: 180px;
-            position: relative;
-            background: #fafafa;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .photo-preview img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .photo-placeholder {
-            font-size: 28px;
-            color: #ccc;
-        }
-        
-        /* Progress bars for price per m2 */
-        .analysis-object-params {
-            margin-top: 20px;
-        }
-        
-        .object-param-row {
-            margin-bottom: 15px;
-        }
-        
-        .price-m2-section {
-            width: 100%;
-        }
-        
-        .analysis-progress-item {
-            margin-bottom: 20px;
-        }
-        
-        .analysis-progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .analysis-progress-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .analysis-progress-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: #666;
-        }
-        
-        .analysis-progress-bar-container {
-            width: 100%;
-            height: 32px;
-            background: #f0f0f0;
-            border-radius: 16px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .analysis-progress-bar {
-            height: 100%;
-            border-radius: 16px;
-            transition: none;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 12px;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .analysis-progress-bar.neutral {
-            background: linear-gradient(90deg, #0067c0 0%, #2196F3 100%);
-        }
-        
-        .analysis-progress-bar.positive {
-            background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 100%);
-        }
-        
-        .analysis-progress-bar.negative {
-            background: linear-gradient(90deg, #d32f2f 0%, #f44336 100%);
-        }
-        
-        .analysis-progress-bar.balance {
-            background: linear-gradient(90deg, #FF9800 0%, #FFB74D 100%);
-        }
-        
-        .analysis-progress-bar.overrun {
-            background: linear-gradient(90deg, #8E24AA 0%, #F06292 100%);
-        }
-        
-        /* Collapsible sections */
-        .analysis-collapsible {
-            margin-bottom: 25px;
-            border-radius: 8px;
-            overflow: visible;
-            page-break-inside: avoid;
-        }
-        
-        .analysis-collapsible-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            background: transparent;
-            cursor: default;
-        }
-        
-        .analysis-collapsible-body {
-            padding: 10px 0;
-        }
-        
-        /* Financial Cards */
-        .analysis-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .analysis-card {
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        
-        .analysis-card-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .card-icon {
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-        
-        .card-icon svg {
-            width: 20px;
-            height: 20px;
-        }
-        
-        .analysis-card-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #333;
-        }
-        
-        .analysis-card-value.positive {
-            color: #4CAF50;
-        }
-        
-        .analysis-card-value.negative {
-            color: #d32f2f;
-        }
-        
-        /* Resources Grid */
-        .analysis-resources-section {
-            margin-bottom: 30px;
-        }
-        
-        .analysis-resources-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-        
-        .analysis-resource-column {
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            page-break-inside: avoid;
-        }
-        
-        .analysis-resource-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .analysis-resource-title svg {
-            width: 20px;
-            height: 20px;
-            margin-right: 8px;
-        }
-        
-        .analysis-resource-chart {
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            height: 200px;
-            margin-bottom: 20px;
-            padding: 0 10px;
-            position: relative;
-        }
-        
-        .analysis-resource-bar-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            max-width: 80px;
-        }
-        
-        .analysis-resource-bar-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 8px;
-            order: 1;
-        }
-        
-        .analysis-resource-bar-wrapper {
-            width: 100%;
-            height: 150px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            position: relative;
-            margin-bottom: 8px;
-            order: 3;
-        }
-        
-        .analysis-resource-bar {
-            width: 35px;
-            border-radius: 4px 4px 0 0;
-            position: relative;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding-top: 4px;
-            font-size: 10px;
-            font-weight: 600;
-            color: transparent;
-        }
-        
-        .analysis-resource-bar.plan {
-            background: linear-gradient(180deg, #2196F3 0%, #1976D2 100%);
-        }
-        
-        .analysis-resource-bar.fact {
-            background: linear-gradient(180deg, #f44336 0%, #d32f2f 100%);
-        }
-        
-        .analysis-resource-bar-value {
-            font-size: 12px;
-            font-weight: 600;
-            color: #000;
-            text-align: center;
-            margin-bottom: 8px;
-            order: 2;
-        }
-        
-        .analysis-resource-diff {
-            margin-top: 16px;
-            padding: 10px 12px;
-            background: #f5f5f5;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .analysis-resource-diff.positive {
-            background: #e8f5e9;
-            color: #4CAF50;
-        }
-        
-        .analysis-resource-diff.negative {
-            background: #ffebee;
-            color: #d32f2f;
-        }
-        
-        /* Print styles */
-        @media print {
-            body {
-                padding: 15px;
-            }
-            .header {
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-            }
-            .analysis-collapsible,
-            .analysis-card,
-            .analysis-resource-column,
-            .analysis-object-section {
-                page-break-inside: avoid;
-            }
-            .analysis-resources-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        
-        @page {
-            margin: 1.5cm;
-        }
-    `;
+    const pricePlan = area > 0 ? analysisData.budget / area : 0;
+    const priceFact = area > 0 ? analysisData.expense / area : 0;
+
+    // Первый рендер идёт обложкой — если он загружен
+    const cover = (analysisData.analysisPhotos || []).find(p => p && p.url);
 
     const html = `<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Анализ - ${objectName}</title>
-    <style>${styles}</style>
+    <title>Аналитика — ${escapeHtml(name)}</title>
+    <link rel="stylesheet" href="/frontend/report.css?v=16">
 </head>
 <body>
-    <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="logo" style="position:fixed;top:10px;right:10px;width:64px;height:auto;opacity:0.95;z-index:9999;">
     <div class="header">
-        <h1>Анализ объекта: ${objectName}</h1>
-        <p>Дата формирования отчета: ${dateStr} в ${timeStr}</p>
+        <div>
+            <h1>${escapeHtml(name)}</h1>
+            <p>Аналитика · сформировано ${dateStr} в ${timeStr}</p>
+        </div>
+        <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="">
     </div>
-    <div class="analysis-wrap">
-        ${clonedContent.innerHTML}
-    </div>
+
+    <section class="rep-section rep-passport">
+        ${cover ? `<img class="rep-cover" src="${cover.url}" alt="">` : ''}
+        <table class="rep-table rep-table--facts">
+            <tbody>
+                ${reportRow('Заказчик', analysisData.customer)}
+                ${reportRow('Телефон', analysisData.customerPhone)}
+                ${reportRow('Адрес', analysisData.address)}
+                ${reportRow('Площадь', area > 0 ? `${formatNum(area)} м²` : '')}
+                ${reportRow('Сумма договора', contract > 0 ? reportMoney(contract) : '')}
+                ${reportRow('Цена / м² (план)', area > 0 ? reportMoney(pricePlan) : '')}
+                ${reportRow('Цена / м² (факт)', area > 0 ? reportMoney(priceFact) : '')}
+            </tbody>
+        </table>
+    </section>
+
+    ${reportSummary()}
+    ${reportWorkTypes()}
+    ${reportResources()}
+
     <script>
-        // Auto-print when page loads
-        window.onload = function() {
-            setTimeout(function() {
-                window.print();
-            }, 500);
-        };
-    </script>
+        // Печать запускаем после загрузки стилей и обложки: иначе
+        // диалог открывается поверх ещё не отрисованной страницы.
+        window.addEventListener('load', function () {
+            setTimeout(function () { window.print(); }, 300);
+        });
+    <\/script>
 </body>
 </html>`;
 
     const win = window.open('', '_blank');
-    if (win) {
-        win.document.write(html);
-        win.document.close();
-    } else {
-        alert('Не удалось открыть новое окно. Проверьте настройки блокировки всплывающих окон.');
+    if (!win) {
+        uiAlert('Не удалось открыть новое окно. Проверьте настройки блокировки всплывающих окон.');
+        return;
     }
+    win.document.write(html);
+    win.document.close();
 }
+
 
 // Expose handlers to global scope for inline handlers
 window.onImageSelected = onImageSelected;
@@ -1065,14 +911,8 @@ window.viewImageFromSlot = viewImageFromSlot;
 window.onPreviewClick = onPreviewClick;
 window.onObjectFieldChange = onObjectFieldChange;
 window.exportAnalysisReport = exportAnalysisReport;
-// Toggle collapsible analysis sections
-function toggleAnalysisSection(name) {
-    if (!analysisData.collapsedSections) analysisData.collapsedSections = { cards: true, progress: true, resources: true };
-    analysisData.collapsedSections[name] = !analysisData.collapsedSections[name];
-    // Re-render so header buttons and bodies update
-    renderAnalysis();
-}
-window.toggleAnalysisSection = toggleAnalysisSection;
+// Сворачивание разделов убрано: аккордеон прятал те самые цифры,
+// ради которых открывают вкладку. Все разделы всегда раскрыты.
 
 
 // Рендеринг прогресс-баров
@@ -1104,9 +944,10 @@ function renderProgressBars() {
                     <span class="analysis-progress-value">${formatNum(item.value)} сум</span>
                 </div>
                 <div class="analysis-progress-bar-container">
-                    <div class="analysis-progress-bar ${item.class}" style="width: ${percentage}%">
-                        ${percentage > 10 ? formatNum(item.value) + ' сум' : ''}
-                    </div>
+                    <!-- Подпись внутри полосы убрана: та же сумма стоит
+                         справа в заголовке строки, а из-за неё полоса
+                         не могла быть тоньше 32px. -->
+                    <div class="analysis-progress-bar ${item.class}" style="width: ${percentage}%"></div>
                 </div>
             </div>
         `;

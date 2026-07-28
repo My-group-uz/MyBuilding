@@ -78,7 +78,7 @@ async function loadBudget(objectId) {
         renderBudget();
     } catch (err) {
         console.error('Error loading budget:', err);
-        alert('Ошибка загрузки бюджета: ' + err.message);
+        uiAlert('Ошибка загрузки бюджета: ' + err.message);
     }
 }
 
@@ -105,6 +105,9 @@ function renderBudget() {
     totalRow.className = 'budget-total-row';
     totalRow.innerHTML = `<strong>ИТОГО ПО БЮДЖЕТУ:</strong> <span>${formatNum(totalSum)} сум</span>`;
     container.appendChild(totalRow);
+
+    // Дерево пересобрано — применяем действующий фильтр заново
+    if (window.reapplySearch) window.reapplySearch('budget');
 }
 
 // Создание элемента этапа
@@ -123,8 +126,8 @@ function createStageElement(stage, stageIdx, startWorkTypeNum) {
     header.innerHTML = `
         <span class="collapse-btn ${stage.collapsed ? 'collapsed' : ''}" title="Свернуть/развернуть">
             ${stage.collapsed ?
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' :
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>'}
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' :
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>'}
         </span>
         <span class="stage-name editable" data-stage-id="${stage.id}" data-field="name">${stage.name}</span>
         <span class="stage-sum">${formatNum(stageSum)} сум</span>
@@ -172,8 +175,8 @@ function createWorkTypeElement(workType, num, stageId) {
         <span class="wt-num">${num}.</span>
         <span class="collapse-btn ${workType.collapsed ? 'collapsed' : ''}" title="Свернуть/развернуть">
             ${workType.collapsed ?
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' :
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>'}
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' :
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>'}
         </span>
         <span class="wt-name editable" data-wt-id="${workType.id}" data-field="name">${workType.name}</span>
         <span class="wt-unit editable-select" data-wt-id="${workType.id}" data-field="unit">${workType.unit}</span>
@@ -248,7 +251,7 @@ function createResourceElement(resource, workTypeNum, resNum, workTypeId) {
                 </div>
             </div>` :
             `<button class="btn-upload-photo" data-res-id="${resource.id}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-icon lucide-camera"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-icon lucide-camera"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
             </button>`
         }
         </span>
@@ -307,7 +310,7 @@ function setupStageEvents(div, stage) {
     // Удалить этап
     const deleteBtn = div.querySelector('.btn-delete');
     deleteBtn.onclick = async () => {
-        if (confirm('Удалить этап и все его виды работ?')) {
+        if (await uiConfirm('Этап будет удалён вместе со всеми видами работ и ресурсами внутри него.', { title: 'Удалить этап?', confirmText: 'Удалить', danger: true })) {
             await deleteStage(stage.id);
             await loadBudget(selectedObjectId);
         }
@@ -358,7 +361,7 @@ function setupWorkTypeEvents(div, workType) {
     // Удалить вид работ
     const deleteBtn = div.querySelector('.btn-delete');
     deleteBtn.onclick = async () => {
-        if (confirm('Удалить вид работ и все его ресурсы?')) {
+        if (await uiConfirm('Вид работ будет удалён вместе со всеми ресурсами внутри него.', { title: 'Удалить вид работ?', confirmText: 'Удалить', danger: true })) {
             await deleteWorkType(workType.id);
             await loadBudget(selectedObjectId);
         }
@@ -423,10 +426,7 @@ function setupResourceEvents(div, resource) {
     if (photoView) {
         photoView.onclick = (e) => {
             e.stopPropagation();
-            const modal = document.getElementById('photo-modal');
-            const modalImg = document.getElementById('photo-modal-img');
-            modalImg.src = photoView.dataset.photo;
-            modal.style.display = 'flex';
+            openPhotoViewer(photoView.dataset.photo);
         };
     }
 
@@ -435,7 +435,7 @@ function setupResourceEvents(div, resource) {
     if (photoDelete) {
         photoDelete.onclick = async (e) => {
             e.stopPropagation();
-            if (confirm('Удалить фото?')) {
+            if (await uiConfirm('Фото будет удалено безвозвратно.', { title: 'Удалить фото?', confirmText: 'Удалить', danger: true })) {
                 await updateResource(resource.id, { photo: '' });
                 await loadBudget(selectedObjectId);
             }
@@ -445,7 +445,7 @@ function setupResourceEvents(div, resource) {
     // Удалить ресурс
     const deleteBtn = div.querySelector('.btn-delete');
     deleteBtn.onclick = async () => {
-        if (confirm('Удалить ресурс?')) {
+        if (await uiConfirm('Ресурс и связанные с ним расходы будут удалены.', { title: 'Удалить ресурс?', confirmText: 'Удалить', danger: true })) {
             await deleteResource(resource.id);
             await loadBudget(selectedObjectId);
         }
@@ -758,7 +758,7 @@ async function addStage(objectId) {
 // Генерация HTML для скачивания/печати бюджета
 function downloadBudget() {
     if (!selectedObjectId || !budgetData || budgetData.length === 0) {
-        alert('Нет данных для скачивания');
+        uiAlert('Нет данных для скачивания');
         return;
     }
 
@@ -842,105 +842,17 @@ function downloadBudget() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Бюджет - ${objectName}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #fff;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #333;
-        }
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        .header p {
-            font-size: 14px;
-            color: #666;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-            font-size: 12px;
-        }
-        th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-        .stage-row td {
-            background-color: #e8f4ff;
-            font-size: 13px;
-            padding: 6px 8px;
-        }
-        .work-type-row {
-            background-color: #f9f9f9;
-        }
-        .work-type-row td {
-            font-weight: 600;
-            padding: 6px 8px;
-        }
-        .resource-header-row {
-            background-color: #f0f0f0;
-            font-size: 10px;
-        }
-        .resource-header-row td {
-            font-weight: bold;
-            color: #666;
-        }
-        .resource-row td {
-            padding: 6px 8px;
-        }
-        .text-right {
-            text-align: right;
-        }
-        .type-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 3px;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-        }
-        .total-row {
-            background-color: #f0f7ff;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .total-row td {
-            padding: 12px 8px;
-            border: 2px solid #0067c0;
-        }
-        @media print {
-            body {
-                padding: 10px;
-            }
-            .header {
-                margin-bottom: 20px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/frontend/report.css?v=16">
+    <!-- Таблица широкая — печатаем альбомно -->
+    <style>@page { size: A4 landscape; margin: 10mm; }</style>
 </head>
 <body>
-    <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="logo" style="position:fixed;top:10px;right:10px;width:64px;height:auto;opacity:0.95;z-index:9999;">
     <div class="header">
-        <h1>${objectName}</h1>
-        <p>Дата формирования: ${dateStr}</p>
+        <div>
+            <h1>${objectName}</h1>
+            <p>Бюджет · сформировано ${dateStr}</p>
+        </div>
+        <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="">
     </div>
     
     <table>
@@ -988,7 +900,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addStageBtn) {
         addStageBtn.onclick = async () => {
             if (!selectedObjectId) {
-                alert('Сначала выберите объект');
+                uiAlert('Сначала выберите объект');
                 return;
             }
             try {
@@ -996,7 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadBudget(selectedObjectId);
             } catch (err) {
                 console.error('Error adding stage:', err);
-                alert('Ошибка при добавлении этапа: ' + err.message);
+                uiAlert('Ошибка при добавлении этапа: ' + err.message);
             }
         };
     }

@@ -4,54 +4,73 @@
     padding: 20px 0;
 }
 
-/* Expense resource table header and row grid */
-.budget-resource-header,
-.budget-resource {
+/* Сетка строк Расхода.
+   ОБЯЗАТЕЛЬНО в пределах #tab-expense: класс .budget-resource общий
+   с Бюджетом, а этот файл подключается позже budget.css. Без ограничения
+   одиннадцатиколоночная сетка Расхода применялась и к Бюджету, где
+   колонок десять, — «Название» попадало в колонку типа шириной 60px
+   и текст переносился в две строки. */
+#tab-expense .budget-resource-header,
+#tab-expense .budget-resource {
     display: grid;
     grid-template-columns:
         40px
-        /* Expand Toggle */
+        /* Раскрыть */
         40px
         /* № */
         60px
-        /* Photo */
-        60px
-        /* Type */
-        200px
-        /* Name */
-        60px
-        /* Unit */
-        100px
-        /* Qty Plan */
-        100px
-        /* Price Plan */
+        /* Фото */
+        50px
+        /* Тип */
+        minmax(220px, 1fr)
+        /* Название — забирает свободное место */
+        50px
+        /* Ед.изм */
+        90px
+        /* Кол-во (план) */
+        110px
+        /* Цена (план) */
         120px
-        /* Sum Plan */
+        /* Сумма (план) */
         120px
-        /* Sum Fact (Total) */
-        1fr;
-    /* Spacer */
+        /* Сумма (факт) */
+        40px;
+    /* Запас справа */
     gap: 8px;
     padding: 10px;
     align-items: center;
-    border-bottom: 1px solid #eee;
-    font-size: 13px;
+    border-bottom: 1px solid var(--c-border-light);
+    font-size: var(--fs-sm);
 }
 
-.budget-resource-header {
-    background: #f5f5f5;
-    font-weight: 600;
-    font-size: 12px;
-    border-bottom: 2px solid #ddd;
+/* Тоже в пределах вкладки: в Бюджете строка перетаскивается
+   (cursor: move), и общее правило подменяло бы курсор. */
+#tab-expense .budget-resource-header {
+    background: var(--c-surface-alt);
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-xs);
+    border-bottom: 1px solid var(--c-border);
 }
 
-.budget-resource {
+#tab-expense .budget-resource {
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background var(--t-fast);
 }
 
-.budget-resource:hover {
-    background: #f9f9f9;
+#tab-expense .budget-resource:hover {
+    background: var(--c-surface-alt);
+}
+
+/* Планшет: ужимаем числовые колонки, «Название» держим как можно шире */
+@media (max-width: 1024px) {
+
+    #tab-expense .budget-resource-header,
+    #tab-expense .budget-resource {
+        grid-template-columns:
+            34px 34px 50px 44px minmax(160px, 1fr) 44px 80px 90px 100px 100px 34px;
+        gap: 6px;
+        padding: 8px;
+    }
 }
 
 /* Expand toggle button */
@@ -64,20 +83,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: var(--fs-lg);
     color: #666;
     transition: transform 0.2s;
 }
 
 .expand-btn:hover {
-    color: #0057d8;
+    color: var(--c-primary);
     background: #eef4ff;
     border-radius: 4px;
 }
 
 .expand-btn.expanded {
     transform: rotate(90deg);
-    color: #0057d8;
+    color: var(--c-primary);
 }
 
 /* Details Row (The container for history) */
@@ -109,15 +128,15 @@
     padding: 8px 10px;
     text-align: left;
     border-bottom: 1px solid #eee;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     vertical-align: middle;
 }
 
 .expense-history-table th {
     background: #f0f0f0;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: #333;
-    font-size: 12px;
+    font-size: var(--fs-xs);
 }
 
 .expense-history-table td {
@@ -130,11 +149,11 @@
     padding: 6px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 13px;
+    font-size: var(--fs-sm);
 }
 
 .table-input:focus {
-    border-color: #0057d8;
+    border-color: var(--c-primary);
     outline: none;
 }
 
@@ -146,8 +165,8 @@
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-regular);
     transition: background 0.2s;
     display: flex;
     align-items: center;
@@ -160,58 +179,105 @@
 
 /* Delete Button */
 .btn-delete-row {
-    color: #d32f2f;
+    color: var(--c-danger);
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 16px;
+    font-size: var(--fs-lg);
     padding: 4px;
+    border-radius: var(--r-sm);
     border-radius: 4px;
     transition: background 0.2s;
 }
 
 .btn-delete-row:hover {
-    background: #ffebee;
+    background: var(--c-danger-soft);
 }
 
 /* Receipt Thumbnails */
 .receipt-cell {
     display: flex;
-    gap: 4px;
+    gap: var(--sp-1);
+    align-items: center;
 }
 
 .receipt-thumb-box {
-    width: 30px;
-    height: 30px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
+    /* Было 30px — на такой миниатюре чек неразличим */
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-sm);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    background: #f9f9f9;
+    background: var(--c-surface-alt);
     overflow: hidden;
     position: relative;
+    flex-shrink: 0;
 }
 
 .receipt-thumb-box:hover {
-    border-color: #0057d8;
+    border-color: var(--c-primary);
 }
 
 .receipt-thumb-box img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+}
+
+/* Кнопка удаления поверх миниатюры, в углу */
+.receipt-del {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 0 0 0 var(--r-sm);
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--t-fast), background var(--t-fast);
+}
+
+.receipt-del .icon {
+    width: 11px;
+    height: 11px;
+    stroke-width: 2.5;
+}
+
+.receipt-thumb-box--filled:hover .receipt-del,
+.receipt-del:focus-visible {
+    opacity: 1;
+}
+
+.receipt-del:hover {
+    background: var(--c-danger);
+}
+
+/* На сенсорных экранах наведения нет — показываем кнопку постоянно */
+@media (hover: none) and (pointer: coarse) {
+    .receipt-del {
+        opacity: 1;
+    }
 }
 
 .receipt-thumb-box span {
-    font-size: 16px;
+    font-size: var(--fs-lg);
     color: #aaa;
     line-height: 1;
 }
 
 /* Over budget warning */
 .over-budget {
-    color: #d32f2f;
-    font-weight: 600;
+    color: var(--c-danger);
+    font-weight: var(--fw-semibold);
 }

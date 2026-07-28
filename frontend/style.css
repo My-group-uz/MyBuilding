@@ -1,39 +1,104 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: 'Segoe UI', 'Inter', sans-serif;
-    background: #f4f7fc;
-    color: #333;
-    height: 100vh;
-    display: flex;
-    overflow: hidden;
-}
+/* Шрифт подключён локально в fonts.css — внешних загрузок нет.
+   Сброс, палитра и брейкпоинты живут в theme.css. */
 
 /* === SIDEBAR === */
 .sidebar {
-    width: 280px;
-    background: #fff;
-    border-right: 1px solid #e0e0e0;
+    width: var(--sidebar-w);
+    background: var(--c-surface);
+    border-right: 1px solid var(--c-border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    z-index: 10;
-    padding: 16px;
+    z-index: var(--z-sidebar);
+    padding: var(--sp-4);
+    position: relative;
+    transition: width var(--t-base);
+}
+
+/* --- Свёрнутое состояние (десктоп): узкая полоса с иконками --- */
+.sidebar.collapsed {
+    width: var(--sidebar-w-collapsed);
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+    overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .object-list li span {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-header {
+    justify-content: center;
+}
+
+.sidebar.collapsed .object-list li {
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.sidebar.collapsed .object-list li svg {
+    margin-right: 0;
+}
+
+.sidebar.collapsed .sidebar-collapse {
+    transform: rotate(180deg);
+}
+
+/* Кнопка сворачивания — прижата к низу панели */
+/* Компактная кнопка у левого края, а не полоса во всю ширину:
+   растянутый элемент читался как отдельный блок меню. */
+.sidebar-collapse {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    margin-top: var(--sp-3);
+    flex-shrink: 0;
+    width: var(--tap-sm);
+    height: var(--tap-sm);
+    background: transparent;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    color: var(--c-text-subtle);
+    cursor: pointer;
+    transition: background var(--t-fast), color var(--t-fast), transform var(--t-base);
+}
+
+.sidebar.collapsed .sidebar-collapse {
+    align-self: center;
+}
+
+.sidebar-collapse:hover {
+    background: var(--c-primary-soft);
+    color: var(--c-primary);
+}
+
+/* Затемнение позади выехавшей панели */
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: var(--z-backdrop);
+    opacity: 0;
+    transition: opacity var(--t-base);
+}
+
+.sidebar-backdrop.visible {
+    opacity: 1;
+}
+
+.sidebar-backdrop[hidden] {
+    display: none;
 }
 
 .sidebar-header {
-    height: 40px;
+    min-height: var(--tap-sm);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    padding: 0 4px;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+    padding: 0 var(--sp-1);
 }
 
 /* Sidebar logo (optional). To use, put `design_key.png` into `frontend/assets/` */
@@ -46,34 +111,19 @@ body {
 }
 
 .sidebar-header h2,
-.sidebar-header span {
-    font-size: 12px;
-    font-weight: 700;
-    color: #888;
+.sidebar-header .sidebar-title {
+    flex: 1;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    color: var(--c-text-subtle);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: var(--ls-wide);
 }
 
-.add-obj-btn,
+/* Оформление кнопок задаёт components.css (.btn / .btn--*).
+   Здесь остаются только правки под конкретное место. */
 #add-object {
-    background: #0067c0;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    width: 24px;
-    height: 24px;
-    font-size: 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-    line-height: 1;
-}
-
-.add-obj-btn:hover,
-#add-object:hover {
-    background: #005a9e;
+    flex-shrink: 0;
 }
 
 .object-list {
@@ -83,30 +133,32 @@ body {
 }
 
 .object-list li {
-    padding: 10px 12px;
+    min-height: var(--tap);
+    padding: var(--sp-2) var(--sp-3);
     cursor: pointer;
-    font-size: 14px;
-    color: #444;
-    border-radius: 6px;
-    transition: all 0.1s ease-in-out;
+    font-size: var(--fs-md);
+    color: var(--c-text);
+    border-radius: var(--r-md);
+    /* Перечисляем свойства явно: all анимирует и раскладку тоже,
+       из-за чего список подрагивает при наведении. */
+    transition: background var(--t-fast), color var(--t-fast),
+        border-color var(--t-fast);
     display: flex;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     border: 1px solid transparent;
-    background: #fff;
+    background: transparent;
 }
 
 .object-list li:hover {
-    background: #f0f0f0;
-    color: #000;
+    background: var(--c-surface-alt);
 }
 
 .object-list li.selected {
-    background: #e5f3ff;
-    border-color: #cce8ff;
-    color: #0067c0;
-    font-weight: 600;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    background: var(--c-primary-soft);
+    border-color: var(--c-primary-border);
+    color: var(--c-primary);
+    font-weight: var(--fw-semibold);
 }
 
 .object-list li svg {
@@ -117,7 +169,7 @@ body {
 }
 
 .object-list li.selected svg {
-    color: #0067c0;
+    color: var(--c-primary);
 }
 
 .object-list li span {
@@ -136,18 +188,18 @@ body {
 }
 
 #tabs-actions-row {
-    height: 60px;
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
+    height: var(--topbar-h);
+    background: var(--c-surface);
+    border-bottom: 1px solid var(--c-border);
+    /* display задаётся из JS (showTabs), здесь только раскладка */
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    gap: var(--sp-3);
+    padding: 0 var(--sp-6);
     flex-shrink: 0;
 }
 
 #tabs {
-    margin-top: 0 !important;
     height: 100%;
     display: flex;
     align-items: center;
@@ -163,52 +215,35 @@ body {
 .tab-btn {
     background: transparent;
     border: none;
-    font-size: 14px;
-    color: #555;
+    font-family: inherit;
+    font-size: var(--fs-md);
+    color: var(--c-text-muted);
     cursor: pointer;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 500;
-    transition: all 0.2s;
+    padding: var(--sp-2) var(--sp-4);
+    border-radius: var(--r-md);
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--ls-tight);
+    transition: background var(--t-fast), color var(--t-fast);
 }
 
 .tab-btn:hover {
-    background: #f5f5f5;
-    color: #333;
+    background: var(--c-surface-alt);
+    color: var(--c-text);
 }
 
 .tab-btn.active {
-    background: #e5f3ff;
-    color: #0067c0;
-    font-weight: 600;
+    background: var(--c-primary-soft);
+    color: var(--c-primary);
+    font-weight: var(--fw-semibold);
 }
 
 #object-actions {
-    display: flex;
-    gap: 8px;
+    /* display задаётся из JS (showTabs) */
+    gap: var(--sp-2);
     align-items: center;
 }
 
-#share-btn,
-#rename-btn,
-#delete-btn {
-    background: #fff;
-    border: 1px solid #d1d1d1;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #333;
-    transition: 0.1s;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-#share-btn:hover,
-#rename-btn:hover,
-#delete-btn:hover {
-    background: #f8f9fa;
-    border-color: #bbb;
-}
+/* Кнопки действий над объектом оформлены классами .btn в разметке */
 
 .tab-content {
     flex: 1;
@@ -218,28 +253,51 @@ body {
 
 .tab-actions {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
-    margin-bottom: 16px;
-    gap: 8px;
+    margin-bottom: var(--sp-3);
+    gap: var(--sp-2);
 }
 
 .icon-btn {
-    background: #fff;
-    border: 1px solid #d1d1d1;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-strong);
     cursor: pointer;
-    padding: 8px;
-    border-radius: 6px;
-    transition: background 0.1s;
-    display: flex;
+    width: var(--tap);
+    height: var(--tap);
+    padding: 0;
+    border-radius: var(--r-md);
+    transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #0067c0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    color: var(--c-primary);
+    box-shadow: var(--sh-xs);
 }
 
 .icon-btn:hover {
-    background: #e5f3ff;
-    border-color: #0067c0;
+    background: var(--c-primary-soft);
+    border-color: var(--c-primary);
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+}
+
+.icon-btn--danger {
+    color: var(--c-danger);
+}
+
+.icon-btn--danger:hover {
+    background: var(--c-danger-soft);
+    border-color: var(--c-danger);
+}
+
+/* SVG без явных размеров растягивался бы на всю кнопку.
+   Задаём габарит здесь — иконки в таблицах приходят из JS. */
+.icon-btn .icon {
+    width: 18px;
+    height: 18px;
 }
 
 /* === INCOME TABLE === */
@@ -262,16 +320,16 @@ body {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid #f0f0f0;
-    font-size: 14px;
+    font-size: var(--fs-md);
 }
 
 .income-table th {
     background: #f9fafb;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: #444;
     border-bottom: 1px solid #e0e0e0;
     text-transform: uppercase;
-    font-size: 12px;
+    font-size: var(--fs-xs);
     letter-spacing: 0.5px;
 }
 
@@ -322,6 +380,31 @@ body {
     transform: scale(1.1);
 }
 
+/* Классы взамен inline-стилей разметки */
+.income-table th.col-actions {
+    width: 70px;
+}
+
+.income-table .total-label {
+    text-align: right;
+    font-weight: var(--fw-semibold);
+}
+
+.income-table .total-value {
+    font-weight: var(--fw-semibold);
+}
+
+.icon-btn.btn-primary {
+    background: var(--c-accent);
+    color: #fff;
+    border-color: var(--c-accent);
+}
+
+.icon-btn.btn-primary:hover {
+    background: var(--c-primary-hover);
+    border-color: var(--c-primary-hover);
+}
+
 /* === MODAL === */
 .modal {
     display: none;
@@ -338,48 +421,67 @@ body {
 }
 
 .modal-content {
-    background: #fff;
-    padding: 32px;
-    border-radius: 12px;
-    width: 440px;
-    max-width: 90%;
+    background: var(--c-surface);
+    padding: var(--sp-6);
+    border-radius: var(--r-2xl);
+    width: 460px;
+    max-width: calc(100% - var(--sp-8));
+    max-height: calc(100dvh - var(--sp-8));
+    overflow-y: auto;
     position: relative;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--sh-lg);
 }
 
+.modal-title {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--ls-tight);
+    /* Место справа под кнопку закрытия, чтобы длинный заголовок
+       не заезжал под неё. */
+    padding-right: var(--tap);
+    margin-bottom: var(--sp-5);
+}
+
+/* На узких экранах модалка прилипает к низу — так до неё
+   дотягивается большой палец. */
+@media (max-width: 600px) {
+    .modal {
+        align-items: flex-end;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+        padding: var(--sp-5) var(--sp-4) calc(var(--sp-5) + var(--safe-bottom));
+    }
+}
+
+/* Просмотр фото переехал в собственный слой — см. lightbox.css */
+
 .modal-close {
-    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--tap-sm);
+    height: var(--tap-sm);
+    background: var(--c-surface-alt);
     border: none;
-    font-size: 24px;
-    color: #999;
+    border-radius: var(--r-pill);
+    color: var(--c-text-subtle);
     cursor: pointer;
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: var(--sp-4);
+    right: var(--sp-4);
+    transition: background var(--t-fast), color var(--t-fast);
 }
 
 .modal-close:hover {
-    color: #333;
+    background: var(--c-border-light);
+    color: var(--c-text);
 }
 
-#income-form input,
-#income-form textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    font-family: inherit;
-    margin-bottom: 16px;
-    transition: border-color 0.2s;
-}
-
-#income-form input:focus,
-#income-form textarea:focus {
-    outline: none;
-    border-color: #0067c0;
-    box-shadow: 0 0 0 3px rgba(0, 103, 192, 0.1);
-}
+/* Поля формы оформлены классом .field (components.css) */
 
 /* === BUDGET STYLES === */
 #budget-container {
@@ -391,9 +493,9 @@ body {
     padding: 16px;
     background: #f0f7ff;
     border-radius: 8px;
-    font-size: 18px;
-    font-weight: 700;
-    color: #0067c0;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
     display: flex;
     justify-content: space-between;
     border: 2px solid #cce8ff;
@@ -419,8 +521,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-weight: 700;
-    font-size: 15px;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-md);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -428,14 +530,14 @@ body {
 .collapse-btn {
     cursor: pointer;
     user-select: none;
-    font-size: 14px;
+    font-size: var(--fs-md);
     color: #666;
     width: 20px;
     text-align: center;
 }
 
 .collapse-btn:hover {
-    color: #0067c0;
+    color: var(--c-primary);
 }
 
 .stage-name {
@@ -450,29 +552,18 @@ body {
 }
 
 .stage-sum {
-    font-weight: 700;
-    color: #0067c0;
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
     margin-left: auto;
     padding: 4px 12px;
-    background: #e5f3ff;
+    background: var(--c-primary-soft);
     border-radius: 4px;
 }
 
+/* Цвета наведения заданы в budget.css вместе с .btn-icon —
+   держим их в одном месте, чтобы не расходились. */
 .btn-add {
-    color: #0067c0;
-    font-weight: 700;
-}
-
-.btn-add:hover {
-    background: #e5f3ff;
-}
-
-.btn-delete {
-    color: #d80027;
-}
-
-.btn-delete:hover {
-    background: #ffe5e5;
+    font-weight: var(--fw-bold);
 }
 
 .budget-work-types-container {
@@ -491,20 +582,12 @@ body {
     opacity: 0.5;
 }
 
-.budget-work-type-header {
-    padding: 10px 12px;
-    display: grid;
-    grid-template-columns: 40px 20px 1fr 80px 100px 100px 120px 60px 30px;
-    gap: 8px;
-    align-items: center;
-    font-size: 14px;
-    font-weight: 600;
-    border-bottom: 1px solid #e8e8e8;
-}
+/* Сетка вида работ задана в budget.css — здесь дублирующее правило
+   удалено, оно только путало при поиске нужных колонок. */
 
 .wt-num {
     color: #888;
-    font-weight: 700;
+    font-weight: var(--fw-semibold);
 }
 
 .wt-name {
@@ -538,25 +621,17 @@ body {
 
 .wt-price,
 .wt-sum {
-    font-weight: 600;
-    color: #0067c0;
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
 }
 
 .budget-resources-container {
     padding: 4px 0;
 }
 
+/* Сетка строки ресурса задана в budget.css (Бюджет) и expense.css
+   (Расход). Здесь оставлено только то, что общее для обеих вкладок. */
 .budget-resource {
-    margin: 2px 24px 2px 48px;
-    padding: 8px 12px;
-    display: grid;
-    grid-template-columns: 30px 50px 120px 1fr 80px 100px 100px 120px 150px 30px;
-    gap: 8px;
-    align-items: center;
-    font-size: 13px;
-    background: #fff;
-    border: 1px solid #f0f0f0;
-    border-radius: 4px;
     cursor: move;
 }
 
@@ -571,7 +646,7 @@ body {
 
 .res-num {
     color: #aaa;
-    font-size: 12px;
+    font-size: var(--fs-xs);
     text-align: center;
 }
 
@@ -600,13 +675,13 @@ body {
     width: 40px;
     height: 40px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: var(--fs-lg);
     transition: all 0.2s;
 }
 
 .btn-upload-photo:hover {
-    background: #e5f3ff;
-    border-color: #0067c0;
+    background: var(--c-primary-soft);
+    border-color: var(--c-primary);
 }
 
 .res-type,
@@ -636,15 +711,15 @@ body {
 }
 
 .res-sum {
-    font-weight: 600;
-    color: #0067c0;
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
 }
 
 .inline-edit-input,
 .inline-edit-select {
     width: 100%;
     padding: 4px 8px;
-    border: 2px solid #0067c0;
+    border: 2px solid var(--c-primary);
     border-radius: 4px;
     font-size: inherit;
     font-family: inherit;
@@ -662,28 +737,58 @@ body {
     transition: background 0.2s;
 }
 
-/* === MOBILE === */
+/* =====================================================================
+   АДАПТИВ
+
+   Порядок блоков строго от широкого к узкому: 1024px → 600px.
+   Раньше блок 700px шёл ПЕРЕД блоком 1200px, из-за чего при равной
+   специфичности правила для планшета перебивали мобильные —
+   именно это ломало вёрстку бюджета и расхода на телефоне.
+   ===================================================================== */
+
+/* Кнопки сайдбара: по умолчанию (десктоп) скрыты */
 .sidebar-toggle {
     display: none;
 }
 
+/* Оформление — от .btn--secondary.btn--icon, здесь только положение */
 .sidebar-close {
     display: none;
     position: fixed;
-    top: 16px;
+    top: calc(var(--sp-4) + var(--safe-top));
     left: 80vw;
-    z-index: 201;
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    font-size: 1.5em;
-    width: 44px;
-    height: 44px;
-    cursor: pointer;
-    box-shadow: 1px 1px 6px #0001;
+    /* Выше самой панели, иначе кнопка недоступна */
+    z-index: calc(var(--z-sidebar) + 1);
+    border-radius: var(--r-pill);
+    box-shadow: var(--sh-md);
 }
 
-@media (max-width: 700px) {
+/* --- Планшет: до 1024px --- */
+@media (max-width: 1024px) {
+
+    /* Планшетные сетки таблиц — в budget.css и expense.css,
+       рядом с десктопными. Здесь только общий кегль. */
+    .budget-work-type-header {
+        font-size: var(--fs-sm);
+    }
+
+    .budget-resource {
+        font-size: var(--fs-xs);
+    }
+
+    .tab-content {
+        padding: var(--sp-5) var(--sp-5);
+    }
+
+    #tabs-actions-row {
+        padding: 0 var(--sp-4);
+    }
+}
+
+/* --- Мобильные: до 600px --- */
+@media (max-width: 600px) {
+
+    /* Сайдбар превращается в выезжающую панель поверх контента */
     .sidebar {
         position: fixed;
         left: 0;
@@ -691,63 +796,67 @@ body {
         bottom: 0;
         width: 80vw;
         max-width: 320px;
-        z-index: 100;
+        padding-top: calc(var(--sp-4) + var(--safe-top));
+        /* Выше затемнения и нижней панели вкладок */
+        z-index: var(--z-sidebar);
         transform: translateX(-100%);
-        transition: transform 0.3s;
-        box-shadow: 2px 0 8px #0002;
+        transition: transform var(--t-slow);
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.13);
     }
 
     .sidebar.open {
         transform: translateX(0);
     }
 
-    .main-content {
-        margin-left: 0;
-        padding: 24px 8px;
+    /* На мобильных сворачивание не имеет смысла — панель и так выезжает */
+    .sidebar.collapsed {
+        width: 80vw;
+        padding-left: var(--sp-4);
+        padding-right: var(--sp-4);
     }
 
+    .sidebar.collapsed .sidebar-title,
+    .sidebar.collapsed .object-list li span {
+        display: initial;
+    }
+
+    .sidebar-collapse {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .tab-content {
+        padding: var(--sp-4) var(--sp-3);
+    }
+
+    /* Оформление — от .btn--secondary.btn--icon в разметке */
     .sidebar-toggle {
-        display: block !important;
-        position: static;
-        margin-right: 12px;
-        background: #fff;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        font-size: 1.5em;
-        width: 44px;
-        height: 44px;
-        cursor: pointer;
+        display: inline-flex;
         flex-shrink: 0;
     }
 
-    #tabs-actions-row {
-        padding: 0 12px;
-    }
-
-    .sidebar-close {
+    /* Показываем «✕» только когда панель реально выехала.
+       Раньше кнопка висела поверх контента всегда. */
+    #sidebar.open~.sidebar-close {
         display: block;
     }
 
-    .budget-work-type-header,
-    .budget-resource {
-        display: flex;
-        flex-wrap: wrap;
+    #tabs-actions-row {
+        padding: 0 var(--sp-3);
     }
 
-    .budget-resource {
-        margin: 2px 16px;
-    }
-
-    /* Make budget and expense sections horizontally scrollable on small screens */
+    /* Широкие сетки НЕ ломаем переносом — даём горизонтальный скролл.
+       Прежний flex-wrap перемешивал колонки и делал таблицы нечитаемыми. */
     #budget-container,
-    #expense-container,
-    .budget-work-types-container,
-    .budget-resources-container {
+    #expense-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
     }
 
-    /* Ensure wide grid elements keep their layout and allow scrolling */
     .budget-work-type-header,
     .budget-resource,
     .budget-resource-header,
@@ -755,21 +864,16 @@ body {
         min-width: 900px;
     }
 
-    /* Hide rename/delete buttons on mobile */
+    .budget-resource {
+        margin: 2px var(--sp-4);
+    }
+
+    /* Действия над объектом уезжают в меню «⋯».
+       Кнопки остаются в DOM: меню кликает их программно. */
+    #share-btn,
     #rename-btn,
     #delete-btn {
         display: none !important;
     }
 }
 
-@media (max-width: 1200px) {
-    .budget-work-type-header {
-        grid-template-columns: 40px 20px 1fr 60px 80px 80px 100px 50px 30px;
-        font-size: 13px;
-    }
-
-    .budget-resource {
-        grid-template-columns: 30px 50px 100px 1fr 60px 80px 80px 100px 120px 30px;
-        font-size: 12px;
-    }
-}

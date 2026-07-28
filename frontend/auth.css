@@ -1,0 +1,364 @@
+/* =====================================================================
+   auth.css — страница входа и админка организаций
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   Вход
+   --------------------------------------------------------------------- */
+.auth-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+    /* На телефоне адресная строка съедает часть 100vh */
+    min-height: 100dvh;
+    overflow: auto;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 380px;
+    padding: var(--sp-6);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh-md);
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-5);
+}
+
+.auth-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: var(--r-md);
+    flex-shrink: 0;
+}
+
+.auth-title {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--ls-tight);
+}
+
+.auth-subtitle {
+    font-size: var(--fs-sm);
+    color: var(--c-text-subtle);
+}
+
+.auth-error {
+    padding: var(--sp-3);
+    margin-bottom: var(--sp-4);
+    background: var(--c-danger-soft);
+    border-radius: var(--r-md);
+    font-size: var(--fs-sm);
+    color: var(--c-danger);
+}
+
+.auth-error[hidden] {
+    display: none;
+}
+
+/* Кнопка «показать пароль» внутри поля */
+.auth-password {
+    position: relative;
+}
+
+.auth-password .field {
+    padding-right: calc(var(--tap) - var(--sp-1));
+}
+
+.auth-eye {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--tap-sm);
+    height: var(--tap-sm);
+    border: none;
+    background: transparent;
+    border-radius: var(--r-sm);
+    color: var(--c-text-faint);
+    cursor: pointer;
+}
+
+.auth-eye:hover {
+    color: var(--c-text-muted);
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin: var(--sp-4) 0;
+    color: var(--c-text-faint);
+    font-size: var(--fs-sm);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--c-border);
+}
+
+/* ---------------------------------------------------------------------
+   Админка
+   --------------------------------------------------------------------- */
+.admin-body {
+    display: block;
+    min-height: 100dvh;
+    overflow: auto;
+}
+
+.admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-5);
+    padding-top: calc(var(--sp-3) + var(--safe-top));
+    background: var(--c-surface);
+    border-bottom: 1px solid var(--c-border);
+}
+
+.admin-topbar__title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    font-size: var(--fs-lg);
+    min-width: 0;
+}
+
+.admin-logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: var(--r-sm);
+    flex-shrink: 0;
+}
+
+.admin-topbar__count {
+    margin-left: var(--sp-2);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-regular);
+    color: var(--c-text-subtle);
+}
+
+.admin-topbar__actions {
+    display: flex;
+    gap: var(--sp-2);
+    flex-shrink: 0;
+}
+
+.admin-main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) + var(--safe-bottom));
+}
+
+.admin-search {
+    max-width: none;
+    margin: 0 0 var(--sp-4);
+}
+
+/* --- Карточки организаций ---
+   Список карточками, а не таблицей: у записи шесть полей, и на
+   телефоне таблица потребовала бы бокового скролла. */
+.org-list {
+    display: grid;
+    gap: var(--sp-3);
+}
+
+.org-card {
+    padding: var(--sp-4);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-xs);
+}
+
+/* Заблокированная организация приглушена, но читаема */
+.org-card--blocked {
+    background: var(--c-surface-alt);
+}
+
+.org-card--blocked .org-card__name {
+    color: var(--c-text-muted);
+}
+
+.org-card__head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-3);
+}
+
+.org-card__logo {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--c-primary-soft);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
+}
+
+.org-card__logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.org-card__ident {
+    flex: 1;
+    min-width: 0;
+}
+
+.org-card__name {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--ls-tight);
+    overflow-wrap: anywhere;
+}
+
+.org-card__person {
+    font-size: var(--fs-sm);
+    color: var(--c-text-subtle);
+}
+
+.org-status {
+    flex-shrink: 0;
+    padding: 3px var(--sp-2);
+    border-radius: var(--r-pill);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+}
+
+.org-status--active {
+    background: #e8f7ec;
+    color: #2e9e4f;
+}
+
+.org-status--blocked {
+    background: var(--c-danger-soft);
+    color: var(--c-danger);
+}
+
+.org-card__facts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-3);
+    padding: var(--sp-3) 0;
+    border-top: 1px solid var(--c-border-light);
+    border-bottom: 1px solid var(--c-border-light);
+}
+
+.org-card__facts dt {
+    font-size: var(--fs-xs);
+    color: var(--c-text-subtle);
+    margin-bottom: 2px;
+}
+
+.org-card__facts dd {
+    font-size: var(--fs-sm);
+    color: var(--c-text);
+    overflow-wrap: anywhere;
+}
+
+.org-card__actions {
+    display: flex;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+}
+
+/* Логотип в форме */
+.org-logo-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+.org-logo-preview {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    background: var(--c-surface-alt);
+    border: 1px dashed var(--c-border-strong);
+    border-radius: var(--r-md);
+    overflow: hidden;
+}
+
+.org-logo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.dlg--wide {
+    max-width: 480px;
+}
+
+/* ---------------------------------------------------------------------
+   Мобильные
+   --------------------------------------------------------------------- */
+@media (max-width: 600px) {
+    .admin-topbar {
+        padding-left: var(--sp-3);
+        padding-right: var(--sp-3);
+    }
+
+    /* Подписи кнопок скрываются — остаются иконки */
+    .admin-hide-sm {
+        display: none;
+    }
+
+    .admin-topbar__actions .btn {
+        width: var(--tap);
+        padding: 0;
+    }
+
+    .admin-main {
+        padding: var(--sp-4) var(--sp-3) calc(var(--sp-6) + var(--safe-bottom));
+    }
+
+    /* Четыре колонки фактов на 360px давали по 70px — не читалось */
+    .org-card__facts {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Кнопки в столбик: три штуки в ряд не помещаются */
+    .org-card__actions {
+        flex-direction: column;
+    }
+
+    .org-card__actions .btn {
+        width: 100%;
+        min-height: var(--tap);
+    }
+
+    .auth-card {
+        padding: var(--sp-5) var(--sp-4);
+        border: none;
+        box-shadow: none;
+        background: transparent;
+    }
+}

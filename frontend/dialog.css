@@ -1,0 +1,155 @@
+/* =====================================================================
+   dialog.css — оформление собственных диалоговых окон (dialog.js)
+   ===================================================================== */
+
+.dlg-root {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+
+    background: rgba(0, 0, 0, 0.35);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    animation: dlg-fade var(--t-fast);
+}
+
+.dlg-root[hidden] {
+    display: none;
+}
+
+@keyframes dlg-fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.dlg {
+    width: 100%;
+    max-width: 400px;
+    max-height: calc(100dvh - var(--sp-8));
+    overflow-y: auto;
+
+    background: var(--c-surface);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh-lg);
+    padding: var(--sp-5);
+
+    animation: dlg-pop var(--t-base) cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes dlg-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.dlg__title {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    color: var(--c-text);
+    margin-bottom: var(--sp-2);
+}
+
+.dlg__message {
+    font-size: var(--fs-md);
+    line-height: 1.5;
+    color: var(--c-text-muted);
+    margin-bottom: var(--sp-4);
+}
+
+.dlg__input {
+    margin-bottom: var(--sp-2);
+}
+
+/* Название, которое нужно повторить при удалении.
+   Показываем моноширинным: так видно пробелы и регистр. */
+.dlg__echo {
+    padding: var(--sp-2) var(--sp-3);
+    margin-bottom: var(--sp-2);
+    background: var(--c-surface-alt);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: var(--fs-sm);
+    color: var(--c-text);
+    user-select: all;
+    word-break: break-all;
+}
+
+.dlg__error {
+    font-size: var(--fs-sm);
+    color: var(--c-danger);
+    margin-bottom: var(--sp-2);
+}
+
+.dlg__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    margin-top: var(--sp-4);
+}
+
+.dlg__action {
+    min-height: var(--tap-sm);
+}
+
+/* Красная кнопка для необратимых действий */
+.btn--destructive {
+    background: var(--c-danger);
+    border-color: var(--c-danger);
+    color: #fff;
+}
+
+.btn--destructive:hover:not(:disabled) {
+    background: #e0342a;
+    border-color: #e0342a;
+}
+
+/* На узких экранах окно прилипает к низу и кнопки растягиваются:
+   так до них дотягивается большой палец. */
+@media (max-width: 600px) {
+    .dlg-root {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .dlg {
+        max-width: 100%;
+        border-radius: var(--r-xl) var(--r-xl) 0 0;
+        padding: var(--sp-5) var(--sp-4) calc(var(--sp-5) + var(--safe-bottom));
+        animation: dlg-slide var(--t-base) cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+
+    @keyframes dlg-slide {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: none;
+        }
+    }
+
+    .dlg__actions {
+        flex-direction: column-reverse;
+    }
+
+    .dlg__action {
+        width: 100%;
+        min-height: var(--tap);
+    }
+}

@@ -1,0 +1,459 @@
+/* =====================================================================
+   mobile-tables.css — таблицы на узких экранах (≤600px)
+
+   Подход: строки-сетки превращаются в карточки средствами CSS
+   (grid-template-areas + подписи через ::before). JS не меняется вовсе —
+   значит инлайн-редактирование, drag-and-drop и обработчики остаются
+   ровно теми же. Достаточно, что каждая ячейка имеет свой класс.
+
+   Почему не «липкая первая колонка»: при 10–11 колонках горизонтальный
+   скролл всё равно вынуждает возить экран туда-сюда ради каждой цифры.
+   ===================================================================== */
+
+@media (max-width: 600px) {
+
+    /* -----------------------------------------------------------------
+       Отменяем горизонтальный скролл из этапа 1 — карточкам он не нужен
+       ----------------------------------------------------------------- */
+    #budget-container,
+    #expense-container {
+        overflow-x: visible;
+    }
+
+    .budget-work-type-header,
+    .budget-resource,
+    .budget-resource-header {
+        min-width: 0;
+    }
+
+    /* Шапка колонок в карточном режиме бессмысленна:
+       подписи переехали к самим значениям. */
+    .budget-resource-header {
+        display: none;
+    }
+
+    /* -----------------------------------------------------------------
+       Вид работ — компактная шапка карточки
+       ----------------------------------------------------------------- */
+    .budget-work-type-header {
+        grid-template-columns: 28px 1fr auto auto;
+        grid-template-areas:
+            "num  name  add  del"
+            "col  unit  qty  qty"
+            "col  price price sum";
+        gap: 4px 8px;
+        padding: 10px 12px;
+        font-size: var(--fs-sm);
+    }
+
+    .budget-work-type-header .wt-num {
+        grid-area: num;
+    }
+
+    .budget-work-type-header .collapse-btn {
+        grid-area: col;
+    }
+
+    .budget-work-type-header .wt-name {
+        grid-area: name;
+        font-weight: var(--fw-semibold);
+    }
+
+    .budget-work-type-header .wt-unit {
+        grid-area: unit;
+    }
+
+    .budget-work-type-header .wt-quantity {
+        grid-area: qty;
+    }
+
+    .budget-work-type-header .wt-price {
+        grid-area: price;
+    }
+
+    .budget-work-type-header .wt-sum {
+        grid-area: sum;
+    }
+
+    .budget-work-type-header .btn-add {
+        grid-area: add;
+    }
+
+    .budget-work-type-header .btn-delete {
+        grid-area: del;
+    }
+
+    /* -----------------------------------------------------------------
+       Ресурс — карточка. Раскладка своя для Бюджета и для Расхода:
+       наборы колонок у них разные, хоть класс строки и общий.
+       ----------------------------------------------------------------- */
+    .budget-resource {
+        gap: 6px 8px;
+        padding: 10px 12px;
+        margin: 6px 8px;
+        font-size: var(--fs-sm);
+        border-radius: var(--r-lg);
+        box-shadow: var(--sh-xs);
+        /* Перетаскивание пальцем конфликтует с прокруткой страницы */
+        cursor: default;
+    }
+
+    /* --- Бюджет --- */
+    #tab-budget .budget-resource {
+        grid-template-columns: 46px 1fr auto;
+        grid-template-areas:
+            "num   name     del"
+            "photo qty      price"
+            "photo unit     sum"
+            "type  supplier supplier";
+    }
+
+    /* --- Расход (есть кнопка раскрытия и сумма факта, нет поставщика) --- */
+    #tab-expense .budget-resource {
+        grid-template-columns: 46px 1fr auto;
+        grid-template-areas:
+            "num   name   expand"
+            "photo qty    price"
+            "photo unit   sum"
+            "type  actual actual";
+    }
+
+    .budget-resource .res-num {
+        grid-area: num;
+        text-align: left;
+        font-weight: var(--fw-semibold);
+        color: var(--c-text-subtle);
+    }
+
+    .budget-resource .res-name {
+        grid-area: name;
+        font-weight: var(--fw-semibold);
+        text-align: left;
+    }
+
+    .budget-resource .res-photo {
+        grid-area: photo;
+    }
+
+    .budget-resource .res-type {
+        grid-area: type;
+    }
+
+    .budget-resource .res-unit {
+        grid-area: unit;
+    }
+
+    .budget-resource .res-quantity {
+        grid-area: qty;
+    }
+
+    .budget-resource .res-price {
+        grid-area: price;
+    }
+
+    .budget-resource .res-sum {
+        grid-area: sum;
+    }
+
+    .budget-resource .res-supplier {
+        grid-area: supplier;
+    }
+
+    .budget-resource .res-actual-sum {
+        grid-area: actual;
+    }
+
+    .budget-resource .expand-btn {
+        grid-area: expand;
+    }
+
+    .budget-resource .btn-delete {
+        grid-area: del;
+    }
+
+    /* Числа выравниваем по левому краю: в карточке правое выравнивание
+       отрывает значение от собственной подписи. */
+    .budget-resource .res-quantity,
+    .budget-resource .res-price,
+    .budget-resource .res-sum,
+    .budget-resource .res-actual-sum {
+        text-align: left;
+    }
+
+    /* --- Подписи вместо шапки таблицы --- */
+    .budget-resource .res-unit::before,
+    .budget-resource .res-quantity::before,
+    .budget-resource .res-price::before,
+    .budget-resource .res-sum::before,
+    .budget-resource .res-actual-sum::before,
+    .budget-resource .res-supplier::before {
+        display: block;
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--c-text-faint);
+        line-height: 1.4;
+    }
+
+    .budget-resource .res-unit::before {
+        content: "Ед.изм";
+    }
+
+    .budget-resource .res-quantity::before {
+        content: "Кол-во";
+    }
+
+    .budget-resource .res-price::before {
+        content: "Цена";
+    }
+
+    .budget-resource .res-sum::before {
+        content: "Сумма";
+    }
+
+    .budget-resource .res-supplier::before {
+        content: "Поставщик";
+    }
+
+    /* В Расходе колонки «Сумма» — это план и факт, подписи уточняем */
+    #tab-expense .budget-resource .res-sum::before {
+        content: "Сумма (план)";
+    }
+
+    #tab-expense .budget-resource .res-actual-sum::before {
+        content: "Сумма (факт)";
+    }
+
+    #tab-expense .budget-resource .res-quantity::before {
+        content: "Кол-во (план)";
+    }
+
+    #tab-expense .budget-resource .res-price::before {
+        content: "Цена (план)";
+    }
+
+    /* Пустая ячейка в конце строки Расхода занимала бы место в сетке */
+    .budget-resource>span:empty {
+        display: none;
+    }
+
+    /* -----------------------------------------------------------------
+       Приход — настоящая <table>, разбираем её на карточки
+       ----------------------------------------------------------------- */
+    .income-table {
+        min-width: 0;
+        display: block;
+    }
+
+    .income-table thead {
+        display: none;
+    }
+
+    .income-table tbody,
+    .income-table tfoot {
+        display: block;
+    }
+
+    .income-table tbody tr {
+        display: grid;
+        grid-template-columns: 44px 1fr auto;
+        gap: 4px 10px;
+        padding: 12px;
+        border-bottom: 1px solid var(--c-border-light);
+    }
+
+    .income-table tbody td {
+        border: none;
+        padding: 0;
+        display: block;
+    }
+
+    /* Порядок ячеек: № Дата Фото Сумма Передал Получил Коммент Действия */
+    .income-table tbody td:nth-child(1) {
+        grid-column: 1;
+        grid-row: 1;
+        font-weight: var(--fw-semibold);
+        color: var(--c-text-subtle);
+    }
+
+    .income-table tbody td:nth-child(2) {
+        grid-column: 2;
+        grid-row: 1;
+        font-weight: var(--fw-semibold);
+    }
+
+    /* Ячейка действий: display:block из общего правила выше сломал бы
+       ряд кнопок, поэтому возвращаем flex явно. */
+    .income-table tbody td:nth-child(8) {
+        grid-column: 3;
+        grid-row: 1 / span 2;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+        gap: var(--sp-1);
+        height: auto;
+    }
+
+    .income-table tbody td:nth-child(3) {
+        grid-column: 1;
+        grid-row: 2 / span 2;
+    }
+
+    .income-table tbody td:nth-child(4) {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: var(--fs-lg);
+        font-weight: var(--fw-semibold);
+        color: var(--c-primary);
+    }
+
+    .income-table tbody td:nth-child(5) {
+        grid-column: 2;
+        grid-row: 3;
+    }
+
+    .income-table tbody td:nth-child(6) {
+        grid-column: 2 / span 2;
+        grid-row: 4;
+    }
+
+    .income-table tbody td:nth-child(7) {
+        grid-column: 1 / span 3;
+        grid-row: 5;
+        color: var(--c-text-muted);
+    }
+
+    .income-table tbody td:nth-child(5)::before {
+        content: "Передал: ";
+        color: var(--c-text-faint);
+    }
+
+    .income-table tbody td:nth-child(6)::before {
+        content: "Получил: ";
+        color: var(--c-text-faint);
+    }
+
+    /* Пустые ячейки в карточке оставляли бы дыры в сетке */
+    .income-table tbody td:empty {
+        display: none;
+    }
+
+    .income-table tfoot tr {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px;
+        background: var(--c-surface-alt);
+    }
+
+    .income-table tfoot td:empty {
+        display: none;
+    }
+
+    .income-table .total-label {
+        text-align: left;
+    }
+
+    /* -----------------------------------------------------------------
+       История расходов внутри раскрытой карточки — остаётся таблицей,
+       но со своим горизонтальным скроллом, чтобы не рвать страницу.
+       ----------------------------------------------------------------- */
+    .details-row {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+
+    .expense-history-table {
+        min-width: 640px;
+    }
+
+    /* =================================================================
+       УПРОЩЕНИЕ МОБИЛЬНОГО ВИДА
+
+       Убираем то, что на 360px либо нечитаемо, либо не работает
+       пальцем. Данные при этом не теряются: всё остаётся доступным
+       на планшете и десктопе.
+       ================================================================= */
+
+    /* Перетаскивание строк требует точного захвата — пальцем оно
+       конфликтует с прокруткой. Курсор-«рука» только вводил в заблуждение. */
+    .budget-stage,
+    .budget-work-type,
+    .budget-resource {
+        cursor: default;
+    }
+
+    /* Четыре фоторендера в ряд превращались в полоски по 70px.
+       Показываем два, остальные — по горизонтали свайпом. */
+    .analysis-object-photos {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        gap: var(--sp-2);
+    }
+
+    .photo-slot {
+        flex: 0 0 62%;
+        scroll-snap-align: start;
+    }
+
+    .photo-preview {
+        height: 120px;
+    }
+
+    /* Наведение мышью на сенсорном экране не существует —
+       кнопки поверх фото были недоступны. Показываем постоянно. */
+    .photo-preview .photo-overlay,
+    .res-photo-container .res-photo-actions {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .res-photo-container .res-photo-actions {
+        display: flex;
+        background: transparent;
+        align-items: flex-start;
+        justify-content: flex-end;
+    }
+
+    /* Параметры объекта в строку не помещались и наезжали друг на друга */
+    .analysis-object-header,
+    .object-quick-params,
+    .object-param-row,
+    .prices-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--sp-3);
+    }
+
+    .price-bar-container {
+        width: 100%;
+    }
+
+    /* Декоративные отступы съедали пол-экрана */
+    .analysis-cards-section,
+    .analysis-progress-section,
+    .analysis-resources-section {
+        margin-bottom: var(--sp-6);
+    }
+
+    .analysis-card,
+    .analysis-resource-column,
+    .analysis-object-section {
+        padding: var(--sp-4);
+    }
+
+    #analysis-container,
+    #budget-container,
+    #expense-container {
+        padding-top: var(--sp-2);
+    }
+
+    /* Верхний регистр в узких колонках рвал слова на переносы */
+    .analysis-card-title,
+    .budget-stage-header {
+        text-transform: none;
+        letter-spacing: var(--ls-normal);
+    }
+}

@@ -1,59 +1,65 @@
+/* =====================================================================
+   СЕССИЯ
+
+   Проверяется до загрузки данных: без неё каждый запрос отвечал бы
+   401 и пользователь видел бы пустой интерфейс с ошибками вместо
+   страницы входа.
+   ===================================================================== */
+(async function guardSession() {
+    try {
+        const res = await fetch('/api/me');
+        const me = await res.json();
+
+        if (!me.authenticated) {
+            location.replace('/frontend/login.html');
+            return;
+        }
+        if (me.role === 'superadmin') {
+            location.replace('/frontend/admin.html');
+            return;
+        }
+
+        // Название организации в шапке сайдбара — чтобы было видно,
+        // под какой учётной записью открыт интерфейс
+        const org = me.organization || {};
+        const title = document.querySelector('.sidebar-title');
+        if (title && org.name) title.textContent = org.name;
+
+        const logo = document.getElementById('sidebar-logo');
+        if (logo && org.logo) {
+            logo.src = org.logo;
+            logo.style.display = 'inline-block';
+        }
+    } catch (e) {
+        // Сервер недоступен — оставляем интерфейс как есть,
+        // запросы данных сами покажут ошибку
+        console.warn('Не удалось проверить сессию', e);
+    }
+})();
+
+async function logout() {
+    if (!await uiConfirm('Выйти из системы?', { confirmText: 'Выйти' })) return;
+    await fetch('/api/logout', { method: 'POST' });
+    location.replace('/frontend/login.html');
+}
+
+window.logout = logout;
+
+// --- Брейкпоинты ---
+// Единственный источник правды для JS. Значения обязаны совпадать
+// с --bp-mobile / --bp-tablet в theme.css.
+const BP_MOBILE = 600;
+const BP_TABLET = 1024;
+
+function isMobile() { return window.innerWidth <= BP_MOBILE; }
+function isTablet() { return window.innerWidth <= BP_TABLET; }
 
 // --- Приход: таблица, модалка, логика через API ---
 let incomeRows = [];
 let editingIncomeId = null;
 let selectedId = null;
 
-// --- Simple password gate ---
-function showPasswordGate() {
-    // create overlay
-    let overlay = document.createElement('div');
-    overlay.id = 'pw-overlay';
-    overlay.style.position = 'fixed';
-    overlay.style.inset = '0';
-    overlay.style.background = '#000';
-    overlay.style.zIndex = '99999';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.color = '#fff';
-    overlay.style.fontSize = '18px';
-    overlay.style.flexDirection = 'column';
-    overlay.innerHTML = '<div style="text-align:center;max-width:90%;">Доступ ограничен. Введите пароль чтобы продолжить.</div>';
-    document.body.appendChild(overlay);
-
-    // allow overlay to render before prompting
-    setTimeout(() => {
-        const correct = '9503';
-        while (true) {
-            const val = prompt('Введите пароль:');
-            // if user cancelled, keep asking
-            if (val === null) continue;
-            if (val === correct) {
-                // remember success for this session
-                try { sessionStorage.setItem('pw_ok', '1'); } catch (e) { /* ignore */ }
-                // remove overlay and exit
-                const el = document.getElementById('pw-overlay');
-                if (el) el.parentNode.removeChild(el);
-                break;
-            } else {
-                alert('Неправильный пароль');
-            }
-        }
-    }, 0);
-}
-
-// Invoke password gate on load unless already accepted in this session
-try {
-    if (!sessionStorage.getItem('pw_ok')) {
-        window.addEventListener('load', () => {
-            showPasswordGate();
-        });
-    }
-} catch (e) {
-    // sessionStorage may be unavailable in some contexts; fallback to showing gate
-    window.addEventListener('load', () => showPasswordGate());
-}
+// Пароль на вход убран ранее; мёртвый код парольного экрана удалён.
 
 // --- Helper: Format Number (1 000 000) ---
 function formatNumber(num) {
@@ -89,7 +95,7 @@ async function loadIncomes() {
         renderIncomeTable();
     } catch (err) {
         console.error("Failed to load incomes:", err);
-        alert("Не удалось загрузить данные: " + err.message);
+        uiAlert("Не удалось загрузить данные: " + err.message);
     }
 }
 
@@ -102,7 +108,7 @@ function renderIncomeTable() {
         // Safe fallback for image
         const photoHtml = row.photo
             ? `<img src="${row.photo}?t=${Date.now()}" class="income-photo-thumb income-photo-view" data-idx="${idx}" alt="Фото">`
-            : '<span style="color:#ccc;font-size:0.8em;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-off-icon lucide-camera-off"><path d="M14.564 14.558a3 3 0 1 1-4.122-4.121"/><path d="m2 2 20 20"/><path d="M20 20H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 .819-.175"/><path d="M9.695 4.024A2 2 0 0 1 10.004 4h3.993a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v7.344"/></svg></span>';
+            : '<span style="color:#ccc;font-size:0.8em;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-off-icon lucide-camera-off"><path d="M14.564 14.558a3 3 0 1 1-4.122-4.121"/><path d="m2 2 20 20"/><path d="M20 20H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 .819-.175"/><path d="M9.695 4.024A2 2 0 0 1 10.004 4h3.993a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v7.344"/></svg></span>';
 
         tr.innerHTML = `
             <td>${idx + 1}</td>
@@ -114,10 +120,10 @@ function renderIncomeTable() {
             <td>${row.comment || ''}</td>
             <td>
                 <button class="icon-btn income-edit" title="Изменить" data-idx="${idx}">
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 13.5V16h2.5l7.1-7.1-2.5-2.5L4 13.5z" stroke="#0057d8" stroke-width="1.5"/><path d="M13.5 6.5l2 2" stroke="#0057d8" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 </button>
-                <button class="icon-btn income-delete" title="Удалить" data-idx="${idx}">
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="5" y="8" width="10" height="7" rx="2" stroke="#d80027" stroke-width="1.5"/><path d="M8 10v3M12 10v3" stroke="#d80027" stroke-width="1.5" stroke-linecap="round"/><rect x="8" y="4" width="4" height="2" rx="1" fill="#d80027"/></svg>
+                <button class="icon-btn icon-btn--danger income-delete" title="Удалить" data-idx="${idx}">
+                    <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
                 </button>
             </td>
         `;
@@ -131,13 +137,13 @@ function renderIncomeTable() {
         btn.onclick = async function () {
             const idx = Number(btn.dataset.idx);
             const row = incomeRows[idx];
-            if (confirm('Удалить эту строку?')) {
+            if (await uiConfirm('Удалить эту строку?', { confirmText: 'Удалить', danger: true })) {
                 try {
                     const res = await fetch(`/objects/${selectedId}/incomes/${row.id}`, { method: 'DELETE' });
                     if (!res.ok) throw new Error('Delete failed');
                     await loadIncomes();
                 } catch (e) {
-                    alert("Ошибка удаления: " + e.message);
+                    uiAlert("Ошибка удаления: " + e.message);
                 }
             }
         };
@@ -163,14 +169,13 @@ function renderIncomeTable() {
         img.onclick = function () {
             const idx = Number(img.dataset.idx);
             const row = incomeRows[idx];
-            if (row.photo) {
-                const modal = document.getElementById('photo-modal');
-                const modalImg = document.getElementById('photo-modal-img');
-                modalImg.src = row.photo;
-                modal.style.display = 'flex';
-            }
+            if (row.photo) openPhotoViewer(row.photo);
         };
     });
+
+    // Таблица перерисована — возвращаем действующий фильтр,
+    // иначе скрытые строки всплывут при заполненном поле поиска.
+    if (window.reapplySearch) window.reapplySearch('income');
 }
 
 document.getElementById('add-income').onclick = function () {
@@ -183,26 +188,64 @@ document.getElementById('add-income').onclick = function () {
     editingIncomeId = null;
 };
 
+/* =====================================================================
+   ПРОСМОТР ФОТО
+
+   Единая точка открытия для всех вкладок: приход, бюджет, расход,
+   рендеры. Раньше каждая проставляла src и display вручную, из-за
+   чего кнопка «открыть оригинал» появилась бы только в одном месте.
+   ===================================================================== */
+function openPhotoViewer(src) {
+    if (!src) return;
+
+    const modal = document.getElementById('photo-modal');
+    const img = document.getElementById('photo-modal-img');
+    const open = document.getElementById('photo-modal-open');
+
+    img.src = src;
+    if (open) open.href = src;
+
+    modal.style.display = 'flex';
+    // Фон страницы не должен прокручиваться под открытым снимком
+    document.body.style.overflow = 'hidden';
+}
+
+function closePhotoViewer() {
+    const modal = document.getElementById('photo-modal');
+    if (!modal || modal.style.display === 'none') return;
+
+    modal.style.display = 'none';
+    // Сбрасываем src: иначе следующий снимок мелькнёт предыдущим,
+    // пока грузится новый.
+    document.getElementById('photo-modal-img').src = '';
+    document.body.style.overflow = '';
+}
+
+window.openPhotoViewer = openPhotoViewer;
+window.closePhotoViewer = closePhotoViewer;
+
 // Закрытие модалок (универсальное)
 document.querySelectorAll('.modal-close').forEach(btn => {
     btn.onclick = function () {
+        if (btn.id === 'photo-modal-close') return closePhotoViewer();
         btn.closest('.modal').style.display = 'none';
-        // Очистка src для фото-модалки
-        if (btn.id === 'photo-modal-close') {
-            document.getElementById('photo-modal-img').src = '';
-        }
     };
 });
 
 // Закрытие по клику на фон
 window.onclick = function (event) {
+    if (event.target.id === 'photo-modal') {
+        // Клик по самому снимку сюда не попадает — только по подложке
+        return closePhotoViewer();
+    }
     if (event.target.classList.contains('modal')) {
-        event.target.style.display = "none";
-        if (event.target.id === 'photo-modal') {
-            document.getElementById('photo-modal-img').src = '';
-        }
+        event.target.style.display = 'none';
     }
 };
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePhotoViewer();
+});
 
 document.getElementById('income-photo').onchange = function (e) {
     // Предпросмотр не нужен, фото отправляется на сервер
@@ -219,7 +262,7 @@ document.getElementById('income-form').onsubmit = async function (e) {
     const photoInput = document.getElementById('income-photo');
     // Валидация обязательных полей
     if (!date || isNaN(amount) || amount <= 0) {
-        alert('Заполните дату и сумму (число > 0)');
+        uiAlert('Заполните дату и сумму (число > 0)');
         return false;
     }
     const formData = new FormData();
@@ -246,11 +289,11 @@ document.getElementById('income-form').onsubmit = async function (e) {
         }
         if (!response.ok) {
             const err = await response.text();
-            alert('Ошибка: ' + err);
+            uiAlert('Ошибка: ' + err);
             return false;
         }
     } catch (err) {
-        alert('Ошибка сети: ' + err);
+        uiAlert('Ошибка сети: ' + err);
         return false;
     }
     document.getElementById('income-modal').style.display = 'none';
@@ -263,10 +306,29 @@ async function fetchObjects() {
     return res.json();
 }
 
+// Двигает белую «таблетку» под активную вкладку нижней панели.
+// Позиция передаётся в CSS переменной, сам сдвиг делает transform —
+// это дешевле, чем менять left и вызывать перерасчёт раскладки.
+function moveTabbarPill(tab) {
+    const tabbar = document.getElementById('mobile-tabbar');
+    if (!tabbar) return;
+
+    const buttons = [...tabbar.querySelectorAll('.tabbar-btn')];
+    const index = buttons.findIndex(b => b.dataset.tab === tab);
+    if (index < 0) return;
+
+    tabbar.style.setProperty('--tab-count', buttons.length);
+    tabbar.style.setProperty('--active-index', index);
+    // Класс включает анимацию — только после первой установки позиции,
+    // иначе таблетка приедет из левого края при восстановлении вкладки.
+    requestAnimationFrame(() => tabbar.classList.add('ready'));
+}
+
 function setActiveTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tab);
     });
+    moveTabbarPill(tab);
     document.querySelectorAll('.tab-content').forEach(div => {
         div.style.display = div.id === 'tab-' + tab ? '' : 'none';
     });
@@ -288,9 +350,18 @@ function setActiveTab(tab) {
         window.loadExpenses(selectedId);
     }
 
-    // Если выбрана вкладка "анализ" — обновить данные
+    // Если выбрана вкладка "аналитика" — обновить данные
     if (tab === 'analysis' && selectedId && window.loadAnalysis) {
         window.loadAnalysis(selectedId);
+    } else if (window.stopHeroSlider) {
+        // Слайдер рендеров крутится по таймеру: на скрытой вкладке
+        // он жёг бы кадры впустую.
+        window.stopHeroSlider();
+    }
+
+    // Если выбрана вкладка "настройки" — подтянуть данные объекта
+    if (tab === 'settings' && selectedId && window.loadSettings) {
+        window.loadSettings(selectedId);
     }
 }
 
@@ -310,14 +381,15 @@ async function renderList() {
         // Icon SVG
         const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house-plus-icon lucide-house-plus" style="margin-right: 8px; color: #555;"><path d="M12.35 21H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v2.35"/><path d="M14.8 12.4A1 1 0 0 0 14 12h-4a1 1 0 0 0-1 1v8"/><path d="M15 18h6"/><path d="M18 15v6"/></svg>`;
         li.innerHTML = `${icon} <span>${index + 1}. ${obj.name}</span>`;
+        // В свёрнутом сайдбаре подпись скрыта — название показываем подсказкой
+        li.title = `${index + 1}. ${obj.name}`;
         li.dataset.id = obj.id; // Store ID for restoration
+        // Чистое имя без порядкового номера: его сверяют при удалении
+        li.dataset.name = obj.name;
         li.onclick = () => {
             selectObject(obj.id, li);
             // Close sidebar on mobile selection
-            if (window.innerWidth <= 700) {
-                sidebar.classList.remove('open');
-                sidebarToggle.style.display = 'block';
-            }
+            if (isMobile()) closeSidebar();
         };
         if (obj.id === selectedId) li.classList.add('selected');
         list.appendChild(li);
@@ -331,7 +403,11 @@ function showTabs(show) {
     const row = document.getElementById('tabs-actions-row');
     const tabs = document.getElementById('tabs');
     const actions = document.getElementById('object-actions');
-    const isMobile = window.innerWidth <= 700;
+    const tabbar = document.getElementById('mobile-tabbar');
+
+    // Нижняя панель имеет смысл только при выбранном объекте.
+    // Видимость по ширине экрана решает CSS — здесь только факт наличия.
+    if (tabbar) tabbar.hidden = !show;
 
     if (show) {
         row.style.display = 'flex';
@@ -341,7 +417,7 @@ function showTabs(show) {
         tabs.style.display = 'none';
         actions.style.display = 'none';
         // On mobile, keep the row visible so the sidebar toggle button is accessible
-        if (isMobile) {
+        if (isMobile()) {
             row.style.display = 'flex';
         } else {
             row.style.display = 'none';
@@ -405,26 +481,40 @@ window.addEventListener('beforeunload', () => {
 });
 
 document.getElementById('add-object').onclick = async () => {
-    const name = prompt('Введите имя объекта:');
-    if (!name) return;
+    const name = await uiPrompt('Как назвать новый объект?', {
+        title: 'Новый объект',
+        placeholder: 'Например: Imperial A blok 7-qavat',
+        confirmText: 'Создать'
+    });
+    if (!name || !name.trim()) return;
     await fetch('/objects/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ name: name.trim() })
     });
     renderList();
 };
 
+// Переименование и удаление доступны из вкладки «Настройки»
+// (settings.js). Здесь оставлены сами обработчики: меню «⋯» на
+// мобильных кликает эти кнопки программно.
 document.getElementById('rename-btn').onclick = async () => {
     if (!selectedId) return;
-    const name = prompt('Новое имя объекта:');
-    if (!name) return;
+    const current = document.querySelector('#object-list li.selected')?.dataset.name || '';
+    const name = await uiPrompt('Новое название объекта', {
+        title: 'Переименовать',
+        value: current,
+        confirmText: 'Сохранить'
+    });
+    if (!name || !name.trim()) return;
     await fetch(`/objects/${selectedId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ name: name.trim() })
     });
     renderList();
+    // Настройки и витрина в аналитике показывают название — обновляем
+    if (window.loadSettings) window.loadSettings(selectedId);
 };
 
 document.getElementById('share-btn').onclick = async () => {
@@ -438,49 +528,189 @@ document.getElementById('share-btn').onclick = async () => {
         // Copy to clipboard
         if (navigator.clipboard) {
             await navigator.clipboard.writeText(fullUrl);
-            alert('Ссылка скопирована в буфер обмена:\n' + fullUrl);
+            uiAlert(fullUrl, { title: 'Ссылка скопирована' });
         } else {
-            // Fallback
-            prompt('Скопируйте ссылку:', fullUrl);
+            // Буфер недоступен (не-HTTPS) — показываем ссылку для ручного копирования
+            uiPrompt('Скопируйте ссылку вручную', {
+                title: 'Ссылка на объект',
+                value: fullUrl,
+                confirmText: 'Готово'
+            });
         }
     } catch (err) {
-        alert('Ошибка создания ссылки: ' + err.message);
+        uiAlert('Ошибка создания ссылки: ' + err.message);
     }
 };
 
 document.getElementById('delete-btn').onclick = async () => {
     if (!selectedId) return;
-    if (!confirm('Удалить объект?')) return;
+
+    // Название берём из списка слева: оно там всегда актуально
+    const li = document.querySelector('#object-list li.selected');
+    const name = li?.dataset.name || 'объект';
+
+    // Ввод названия вместо «Вы уверены?»: удаление уносит с собой
+    // весь бюджет, приход и расход, а обычное подтверждение
+    // пролистывают не читая.
+    if (!await uiConfirmByName(name)) return;
+
     await fetch(`/objects/${selectedId}`, { method: 'DELETE' });
     clearSelection();
     renderList();
 };
 
-// Mobile Sidebar Toggle
+/* =====================================================================
+   САЙДБАР
+
+   Два независимых режима:
+     • десктоп (>600px) — панель всегда в потоке, класс `collapsed`
+       сжимает её до полосы с иконками. Состояние переживает перезагрузку.
+     • мобильный (≤600px) — панель выезжает поверх контента (класс `open`)
+       с затемнением. Закрывается тапом вне, свайпом влево и Esc.
+   ===================================================================== */
 const sidebarToggle = document.getElementById('sidebar-toggle');
 const sidebar = document.getElementById('sidebar');
 const sidebarClose = document.getElementById('sidebar-close');
+const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+const sidebarCollapseBtn = document.getElementById('sidebar-collapse');
 
-if (sidebarToggle) {
-    sidebarToggle.onclick = function () {
-        sidebar.classList.add('open');
-        sidebarToggle.style.display = 'none';
-    };
+const SIDEBAR_COLLAPSED_KEY = 'sidebarCollapsed';
+
+// --- Мобильный режим: выезжающая панель ---
+function openSidebar() {
+    sidebar.classList.add('open');
+    if (sidebarToggle) sidebarToggle.style.display = 'none';
+    if (sidebarBackdrop) {
+        sidebarBackdrop.hidden = false;
+        // Кадр задержки — иначе переход opacity не проигрывается,
+        // т.к. элемент появляется и меняет прозрачность в одном кадре.
+        requestAnimationFrame(() => sidebarBackdrop.classList.add('visible'));
+    }
 }
-if (sidebarClose) {
-    sidebarClose.onclick = function () {
-        sidebar.classList.remove('open');
-        // Show toggle button again if on mobile
-        if (window.innerWidth <= 700) {
-            sidebarToggle.style.display = 'block';
+
+function closeSidebar() {
+    sidebar.classList.remove('open');
+    // Пустая строка, а не 'block': видимость снова решает CSS.
+    if (sidebarToggle) sidebarToggle.style.display = '';
+    if (sidebarBackdrop) {
+        sidebarBackdrop.classList.remove('visible');
+        setTimeout(() => {
+            if (!sidebar.classList.contains('open')) sidebarBackdrop.hidden = true;
+        }, 250);
+    }
+}
+
+if (sidebarToggle) sidebarToggle.onclick = openSidebar;
+if (sidebarClose) sidebarClose.onclick = closeSidebar;
+if (sidebarBackdrop) sidebarBackdrop.onclick = closeSidebar;
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+});
+
+// Свайп влево по панели закрывает её
+(function enableSwipeToClose() {
+    let startX = 0, startY = 0, tracking = false;
+
+    sidebar.addEventListener('touchstart', (e) => {
+        if (!sidebar.classList.contains('open')) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        tracking = true;
+    }, { passive: true });
+
+    sidebar.addEventListener('touchmove', (e) => {
+        if (!tracking) return;
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+        // Горизонтальный жест влево, и он длиннее вертикального —
+        // иначе это обычная прокрутка списка объектов.
+        if (dx < -50 && Math.abs(dx) > Math.abs(dy)) {
+            tracking = false;
+            closeSidebar();
         }
+    }, { passive: true });
+
+    sidebar.addEventListener('touchend', () => { tracking = false; }, { passive: true });
+})();
+
+// --- Десктопный режим: сворачивание в полосу ---
+function applySidebarCollapsed(collapsed) {
+    sidebar.classList.toggle('collapsed', collapsed);
+    if (sidebarCollapseBtn) {
+        sidebarCollapseBtn.title = collapsed ? 'Развернуть меню' : 'Свернуть меню';
+        sidebarCollapseBtn.setAttribute('aria-label', sidebarCollapseBtn.title);
+    }
+}
+
+if (sidebarCollapseBtn) {
+    sidebarCollapseBtn.onclick = () => {
+        const collapsed = !sidebar.classList.contains('collapsed');
+        applySidebarCollapsed(collapsed);
+        try { localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch (e) { /* приватный режим */ }
     };
 }
+
+// Восстанавливаем состояние при загрузке
+try {
+    applySidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+} catch (e) {
+    applySidebarCollapsed(false);
+}
+
+// При переходе десктоп → мобильный гасим выехавшую панель,
+// чтобы она не осталась висеть поверх контента.
+window.addEventListener('resize', () => {
+    if (!isMobile() && sidebar.classList.contains('open')) closeSidebar();
+});
+
+/* =====================================================================
+   МЕНЮ «⋯» (мобильные)
+
+   Своих обработчиков не заводит: переиспользует уже настроенные
+   #share-btn / #rename-btn / #delete-btn через программный клик.
+   Логика действий остаётся в одном месте.
+   ===================================================================== */
+const moreBtn = document.getElementById('more-btn');
+const moreSheet = document.getElementById('more-sheet');
+
+function openMoreSheet() {
+    if (moreSheet) moreSheet.hidden = false;
+}
+
+function closeMoreSheet() {
+    if (moreSheet) moreSheet.hidden = true;
+}
+
+if (moreBtn) moreBtn.onclick = openMoreSheet;
+
+if (moreSheet) {
+    moreSheet.addEventListener('click', (e) => {
+        // Клик мимо панели (по затемнению) — закрыть
+        if (e.target === moreSheet) return closeMoreSheet();
+
+        const item = e.target.closest('.more-sheet__item');
+        if (!item) return;
+
+        const action = item.dataset.action;
+        closeMoreSheet();
+        if (action === 'cancel') return;
+
+        const target = document.getElementById(`${action}-btn`);
+        // Кнопки скрыты на мобильных через CSS, но в DOM остаются —
+        // программный клик срабатывает штатно.
+        if (target) target.click();
+    });
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && moreSheet && !moreSheet.hidden) closeMoreSheet();
+});
 
 // Генерация HTML для скачивания/печати прихода
 function downloadIncome() {
     if (!selectedId || !incomeRows || incomeRows.length === 0) {
-        alert('Нет данных для скачивания');
+        uiAlert('Нет данных для скачивания');
         return;
     }
 
@@ -526,74 +756,15 @@ function downloadIncome() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Приход - ${objectName}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #fff;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #333;
-        }
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        .header p {
-            font-size: 14px;
-            color: #666;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-            font-size: 12px;
-        }
-        th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-        .text-right {
-            text-align: right;
-        }
-        .total-row {
-            background-color: #f0f7ff;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .total-row td {
-            padding: 12px 8px;
-            border: 2px solid #0067c0;
-        }
-        @media print {
-            body {
-                padding: 10px;
-            }
-            .header {
-                margin-bottom: 20px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/frontend/report.css?v=16">
 </head>
 <body>
-    <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="logo" style="position:fixed;top:10px;right:10px;width:64px;height:auto;opacity:0.95;z-index:9999;">
     <div class="header">
-        <h1>${objectName}</h1>
-        <p>Дата формирования: ${dateStr}</p>
+        <div>
+            <h1>${objectName}</h1>
+            <p>Приход · сформировано ${dateStr}</p>
+        </div>
+        <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="">
     </div>
     
     <table>
@@ -647,7 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.exportAnalysisReport) {
                 window.exportAnalysisReport();
             } else {
-                alert('Экспорт анализа недоступен');
+                uiAlert('Экспорт анализа недоступен');
             }
         };
     }

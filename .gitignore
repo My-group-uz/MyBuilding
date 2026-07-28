@@ -53,3 +53,17 @@ Thumbs.db
 
 # Railway
 .railway/
+
+# Локальное окружение разработки
+.venv/
+*.bak
+main.py.bak
+
+# Загруженные пользователями файлы: на Railway файловая система
+# эфемерна, репозиторий для них не место
+uploads/
+!uploads/.gitkeep
+
+# Кэш инструментов
+.pytest_cache/
+.mypy_cache/

@@ -1,0 +1,325 @@
+/* =====================================================================
+   report.css — оформление печатных отчётов (Приход, Бюджет, Расход)
+
+   Отчёты открываются в отдельном окне и печатаются в PDF. Раньше стили
+   были продублированы четырьмя копиями внутри JS: Arial, чёрные рамки
+   по каждой ячейке, случайные размеры. Здесь всё в одном месте.
+
+   Печатный документ — не экран: рамки заменены тонкими линиями,
+   заливки убраны почти везде (принтер съедает тон), а иерархия
+   держится начертанием и отступами.
+   ===================================================================== */
+
+@import url('fonts.css');
+
+@page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+}
+
+/* Широкие таблицы просят альбомную ориентацию.
+   Класс ставится на <html> при сборке документа. */
+.landscape {
+    /* :root не может влиять на @page — правило дублируется ниже */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Onest', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    font-size: 10pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 16px;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------------
+   Шапка документа
+   --------------------------------------------------------------------- */
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1.5px solid #1a1a1a;
+    text-align: left;
+}
+
+.header h1 {
+    font-size: 16pt;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    color: #1a1a1a;
+}
+
+.header p {
+    margin-top: 4px;
+    font-size: 9pt;
+    font-weight: 400;
+    color: #666;
+}
+
+/* Логотип в потоке шапки, а не position:fixed поверх страницы:
+   раньше он накладывался на первую строку таблицы. */
+.pdf-logo {
+    width: 52px;
+    height: auto;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+/* ---------------------------------------------------------------------
+   Таблицы
+   --------------------------------------------------------------------- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+}
+
+th,
+td {
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 9pt;
+    /* Только горизонтальные линии: сетка из рамок по каждой ячейке
+       на печати выглядит как бухгалтерский бланк и мешает читать. */
+    border: none;
+    border-bottom: 0.5pt solid #d8d8d8;
+    vertical-align: middle;
+}
+
+th {
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #555;
+    background: transparent;
+    border-bottom: 1pt solid #999;
+    white-space: nowrap;
+}
+
+/* Числа выравниваем по правому краю и моноширинными цифрами:
+   разряды выстраиваются столбиком и суммы легко сверять. */
+.text-right,
+td.text-right {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+td:empty {
+    border-bottom-color: transparent;
+}
+
+/* ---------------------------------------------------------------------
+   Иерархия строк: этап → вид работ → ресурс
+   --------------------------------------------------------------------- */
+.stage-row td {
+    padding-top: 12px;
+    font-size: 10pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #1a1a1a;
+    background: transparent;
+    border-bottom: 1pt solid #1a1a1a;
+}
+
+.work-type-row td {
+    font-weight: 600;
+    background: transparent;
+    border-bottom: 0.5pt solid #bbb;
+}
+
+.resource-header-row td {
+    font-size: 7.5pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    background: transparent;
+    border-bottom: 0.5pt solid #e2e2e2;
+}
+
+.resource-row td {
+    color: #333;
+}
+
+/* Строка расхода под своим ресурсом — с отбивкой слева */
+.expense-row td {
+    font-size: 8pt;
+    color: #555;
+}
+
+/* ---------------------------------------------------------------------
+   Итоги
+   --------------------------------------------------------------------- */
+.total-row td {
+    padding: 10px 8px;
+    font-size: 11pt;
+    font-weight: 600;
+    background: transparent;
+    border-top: 1.5pt solid #1a1a1a;
+    border-bottom: none;
+}
+
+/* ---------------------------------------------------------------------
+   Метки
+   --------------------------------------------------------------------- */
+.type-badge {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 7pt;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.over-budget {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+/* Миниатюры чеков и фото */
+td img {
+    display: block;
+    max-width: 32px;
+    max-height: 32px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Отчёт «Аналитика»
+
+   Собирается из данных, а не клонированием экрана: карточки и
+   столбчатые диаграммы на бумаге давали полупустые прямоугольники.
+   --------------------------------------------------------------------- */
+.rep-section {
+    margin-bottom: 18px;
+    /* Раздел целиком переносится на следующую страницу,
+       а не разрывается посередине */
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.rep-section h2 {
+    font-size: 11pt;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 0.75pt solid #1a1a1a;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+.rep-table th[scope="row"] {
+    width: 38%;
+    font-size: 9pt;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #666;
+    border-bottom: 0.5pt solid #e8e8e8;
+    white-space: normal;
+}
+
+.rep-table td {
+    font-weight: 500;
+}
+
+/* Колонка сумм: только два столбца, значение прижато вправо */
+.rep-table--figures th[scope="row"] {
+    width: 60%;
+}
+
+.rep-table--figures td {
+    font-weight: 600;
+}
+
+.rep-total th,
+.rep-total td {
+    font-weight: 600;
+    color: #1a1a1a;
+    border-bottom: none;
+    border-top: 0.75pt solid #999;
+}
+
+/* Строки с нулями печатаются, но приглушённо: список типов ресурсов
+   фиксированный и нужен для сверки, однако заполненные строки должны
+   выделяться на его фоне. */
+.rep-zero td {
+    color: #9a9a9a;
+}
+
+/* Паспорт объекта: обложка слева, данные справа */
+.rep-passport {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.rep-passport .rep-table {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.rep-cover {
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.rep-table--facts th[scope="row"] {
+    width: 42%;
+}
+
+/* ---------------------------------------------------------------------
+   Печать
+   --------------------------------------------------------------------- */
+@media print {
+    body {
+        padding: 0;
+    }
+
+    /* Шапка таблицы повторяется на каждой странице */
+    thead {
+        display: table-header-group;
+    }
+
+    tr {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Этап не остаётся один внизу страницы */
+    .stage-row,
+    .work-type-row {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+
+    .total-row {
+        page-break-inside: avoid;
+    }
+
+    /* Без этого браузер печатает цветные метки белыми */
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

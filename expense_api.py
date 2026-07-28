@@ -184,6 +184,48 @@ async def upload_receipt(expense_id: int, receipt_num: int, request: Request):
         print(f"Error uploading receipt: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Delete receipt photo
+@app.delete("/expenses/{expense_id}/receipt/{receipt_num}")
+async def delete_receipt(expense_id: int, receipt_num: int):
+    """Удалить фото чека: очищает поле в БД и удаляет файл с диска."""
+    if receipt_num not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="Неверный номер чека")
+
+    field_name = f"receipt_photo_{receipt_num}"
+    async with app.state.db.acquire() as conn:
+        # Путь читаем до очистки: RETURNING отдал бы уже NULL
+        old = await conn.fetchval(
+            f"SELECT {field_name} FROM resource_expenses WHERE id=$1", expense_id
+        )
+        row = await conn.fetchrow(
+            f"UPDATE resource_expenses SET {field_name}=NULL WHERE id=$1 RETURNING id",
+            expense_id
+        )
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Расход не найден")
+
+    # Файл удаляем только если на него больше никто не ссылается:
+    # один и тот же снимок мог быть подставлен в несколько записей.
+    if old:
+        async with app.state.db.acquire() as conn:
+            still_used = await conn.fetchval(
+                "SELECT 1 FROM resource_expenses WHERE receipt_photo_1=$1 "
+                "OR receipt_photo_2=$1 OR receipt_photo_3=$1 LIMIT 1",
+                old
+            )
+        if not still_used:
+            path = os.path.join(UPLOAD_DIR, os.path.basename(old))
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except OSError as e:
+                # Запись в БД уже очищена — для пользователя чек удалён.
+                # Осиротевший файл не повод возвращать ошибку.
+                print(f"Не удалось удалить файл чека {path}: {e}")
+
+    return {"status": "deleted"}
+
 # Delete expense
 @app.delete("/expenses/{expense_id}")
 async def delete_expense(expense_id: int):

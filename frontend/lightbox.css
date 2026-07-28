@@ -1,0 +1,111 @@
+/* =====================================================================
+   lightbox.css — полноэкранный просмотр фотографий
+
+   Раньше фото показывалось в общей модалке (.modal-content): та
+   ограничена шириной 460px и прокручивается, поэтому снимок вылезал
+   за края с горизонтальной полосой, а кнопка закрытия ложилась
+   поверх изображения.
+   ===================================================================== */
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+
+    /* display управляется из JS (flex/none) */
+    align-items: center;
+    justify-content: center;
+    padding: calc(56px + var(--safe-top)) var(--sp-4) calc(var(--sp-5) + var(--safe-bottom));
+
+    /* Тёмный фон, а не полупрозрачный серый: фотографию оценивают
+       по самому снимку, светлая подложка искажает восприятие. */
+    background: rgba(12, 12, 14, 0.92);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+
+    animation: lb-fade var(--t-fast) ease;
+}
+
+@keyframes lb-fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Изображение вписывается целиком — без обрезки и без растягивания
+   мелких снимков выше их исходного размера. */
+.lightbox__img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: var(--r-md);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+    animation: lb-zoom var(--t-base) cubic-bezier(0.2, 0.9, 0.3, 1);
+    /* Клик по самому снимку не закрывает окно — закрывает фон */
+    cursor: default;
+}
+
+@keyframes lb-zoom {
+    from {
+        opacity: 0;
+        transform: scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* --- Панель управления сверху справа --- */
+.lightbox__bar {
+    position: absolute;
+    top: calc(var(--sp-3) + var(--safe-top));
+    right: var(--sp-3);
+    display: flex;
+    gap: var(--sp-2);
+    /* Над изображением, но фон при этом остаётся кликабельным */
+    z-index: 1;
+}
+
+.lightbox__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--tap);
+    height: var(--tap);
+
+    background: rgba(255, 255, 255, 0.14);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: none;
+    border-radius: var(--r-pill);
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--t-fast), transform var(--t-fast);
+}
+
+.lightbox__btn:hover {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+.lightbox__btn:active {
+    transform: scale(0.94);
+}
+
+@media (max-width: 600px) {
+    .lightbox {
+        padding: calc(52px + var(--safe-top)) var(--sp-2) calc(var(--sp-4) + var(--safe-bottom));
+    }
+
+    .lightbox__img {
+        border-radius: var(--r-sm);
+    }
+}

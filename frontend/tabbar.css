@@ -1,0 +1,245 @@
+/* =====================================================================
+   tabbar.css — нижняя панель вкладок (мобильные) и меню «⋯»
+
+   Эффект «liquid glass»: полупрозрачный фон + размытие подложки.
+   Подключается последним, чтобы перекрывать десктопные правила .tab-btn.
+   ===================================================================== */
+
+/* Панель существует ТОЛЬКО на мобильных.
+   Без этого правила <nav> остаётся блочным элементом и на десктопе
+   вылезает поверх шапки: JS снимает атрибут hidden при выборе объекта,
+   а больше её ничто не скрывало. */
+.tabbar,
+.tabbar[hidden] {
+    display: none;
+}
+
+.more-btn {
+    display: none;
+}
+
+.more-sheet[hidden] {
+    display: none;
+}
+
+@media (max-width: 600px) {
+
+    /* -----------------------------------------------------------------
+       Плавающая капсула (стиль iOS 26 «liquid glass»)
+
+       Панель не прижата к краю экрана, а висит над контентом
+       скруглённой пилюлей. Под активной вкладкой скользит белая
+       «таблетка» — она и есть главный индикатор.
+       ----------------------------------------------------------------- */
+    /* :not([hidden]) — иначе панель показывалась бы и без выбранного объекта */
+    .tabbar:not([hidden]) {
+        display: flex;
+    }
+
+    .tabbar {
+        position: fixed;
+        left: var(--sp-3);
+        right: var(--sp-3);
+        bottom: calc(var(--sp-3) + var(--safe-bottom));
+        z-index: var(--z-tabbar);
+
+        height: var(--tabbar-h);
+        padding: var(--sp-1);
+
+        /* --- стекло ---
+           Подложка приложения светлая, поэтому прозрачность держим
+           высокой: иначе капсула читается как серая, а не белая. */
+        background: rgba(255, 255, 255, 0.78);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        backdrop-filter: blur(24px) saturate(180%);
+
+        border-radius: var(--r-pill);
+        /* Светлая грань сверху имитирует преломление на кромке стекла */
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            0 2px 8px rgba(0, 0, 0, 0.06),
+            inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    /* Запасной вариант без backdrop-filter: прозрачный фон
+       выглядел бы грязно, поэтому делаем его плотным. */
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .tabbar {
+            background: rgba(255, 255, 255, 0.96);
+        }
+    }
+
+    /* --- Скользящая белая таблетка ---
+       Ширина = доля от панели по числу вкладок, сдвиг = индекс * ширину.
+       Позиционируется одним transform, поэтому анимация идёт на GPU. */
+    .tabbar__pill {
+        position: absolute;
+        top: var(--sp-1);
+        bottom: var(--sp-1);
+        left: var(--sp-1);
+        width: calc((100% - var(--sp-2)) / var(--tab-count, 4));
+
+        background: #ffffff;
+        border-radius: var(--r-pill);
+        box-shadow:
+            0 2px 10px rgba(0, 0, 0, 0.10),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+        transform: translateX(calc(var(--active-index, 0) * 100%));
+        /* Лёгкий «перелёт» — таблетка догоняет вкладку как жидкость */
+        transition: transform 0.42s cubic-bezier(0.34, 1.36, 0.44, 1);
+        pointer-events: none;
+    }
+
+    /* До первого переключения таблетку не показываем,
+       иначе она прыгнет из левого края при восстановлении вкладки. */
+    .tabbar:not(.ready) .tabbar__pill {
+        opacity: 0;
+        transition: none;
+    }
+
+    .tabbar-btn {
+        flex: 1;
+        position: relative;
+        /* над таблеткой */
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+
+        /* Сбрасываем оформление десктопной .tab-btn */
+        background: transparent;
+        border: none;
+        border-radius: var(--r-pill);
+        padding: 4px 0;
+
+        font-size: var(--fs-xs);
+        font-weight: var(--fw-regular);
+        color: var(--c-text-subtle);
+        cursor: pointer;
+        transition: color var(--t-base);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tabbar-btn svg {
+        stroke-width: 1.9;
+        transition: stroke-width var(--t-base);
+    }
+
+    /* Фон активной вкладке не нужен — его рисует таблетка */
+    .tabbar-btn.active {
+        background: transparent;
+        color: var(--c-primary);
+        font-weight: var(--fw-semibold);
+    }
+
+    .tabbar-btn.active svg {
+        stroke-width: 2.4;
+    }
+
+    .tabbar-btn:active svg {
+        transform: scale(0.88);
+    }
+
+    /* Контент не должен уезжать под плавающую панель */
+    .tab-content {
+        padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--sp-6));
+    }
+
+    /* Верхние вкладки на мобильных не нужны — их роль играет нижняя панель.
+       Сама строка остаётся: в ней гамбургер и кнопка «⋯». */
+    #tabs {
+        display: none !important;
+    }
+
+    #tabs-actions-row {
+        justify-content: space-between;
+    }
+
+    /* -----------------------------------------------------------------
+       Меню «⋯»
+       ----------------------------------------------------------------- */
+    .more-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: var(--c-surface);
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-md);
+        font-size: var(--fs-xl);
+        line-height: 1;
+        color: var(--c-text-muted);
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .more-sheet {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-sheet);
+        display: flex;
+        align-items: flex-end;
+        background: rgba(0, 0, 0, 0.35);
+    }
+
+    .more-sheet__panel {
+        width: 100%;
+        padding: var(--sp-2) var(--sp-3) calc(var(--sp-3) + var(--safe-bottom));
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-1);
+
+        background: rgba(255, 255, 255, 0.85);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        backdrop-filter: blur(24px) saturate(180%);
+        border-radius: var(--r-xl) var(--r-xl) 0 0;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+
+        animation: sheet-up var(--t-base);
+    }
+
+    @keyframes sheet-up {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .more-sheet__item {
+        padding: 14px;
+        background: transparent;
+        border: none;
+        border-radius: var(--r-lg);
+        font-size: var(--fs-lg);
+        font-family: inherit;
+        color: var(--c-primary);
+        cursor: pointer;
+    }
+
+    .more-sheet__item:active {
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    .more-sheet__item--danger {
+        color: var(--c-danger);
+    }
+
+    .more-sheet__cancel {
+        margin-top: var(--sp-1);
+        background: rgba(255, 255, 255, 0.7);
+        font-weight: var(--fw-semibold);
+        color: var(--c-text);
+    }
+}
+
+/* Тёмного варианта здесь намеренно нет.
+   Приложение целиком светлое, и реакция одной лишь панели на системную
+   тёмную тему давала тёмную капсулу поверх светлого экрана. */

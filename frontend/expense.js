@@ -56,6 +56,9 @@ function renderExpenseTree() {
         <span>Бюджет: ${fmt(totalBudget)} | Факт: <span class="${totalActual > totalBudget ? 'over-budget' : ''}">${fmt(totalActual)}</span></span>
     `;
     container.appendChild(totalRow);
+
+    // Дерево пересобрано — применяем действующий фильтр заново
+    if (window.reapplySearch) window.reapplySearch('expense');
 }
 
 function createExpenseStageElement(stage, stageNum) {
@@ -70,7 +73,7 @@ function createExpenseStageElement(stage, stageNum) {
     header.innerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
             <span class="collapse-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
             </span>
             <strong>${stage.name}</strong>
         </div>
@@ -96,8 +99,8 @@ function createExpenseStageElement(stage, stageNum) {
         const isCollapsed = workTypesContainer.style.display === 'none';
         workTypesContainer.style.display = isCollapsed ? '' : 'none';
         collapseIcon.innerHTML = isCollapsed ?
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>' :
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>' :
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
     });
 
     div.appendChild(header);
@@ -120,7 +123,7 @@ function createExpenseWorkTypeElement(workType, wtNum) {
     header.innerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
             <span class="collapse-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
             </span>
             <span>${workType.name} (${workType.unit})</span>
         </div>
@@ -163,8 +166,8 @@ function createExpenseWorkTypeElement(workType, wtNum) {
         const isCollapsed = resourcesContainer.style.display === 'none';
         resourcesContainer.style.display = isCollapsed ? '' : 'none';
         collapseIcon.innerHTML = isCollapsed ?
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>' :
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>' :
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
     });
 
     div.appendChild(header);
@@ -191,11 +194,11 @@ function createExpenseResourceElement(resource, wtNum, resNum) {
 
     div.innerHTML = `
         <button class="expand-btn" title="Раскрыть детали">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>
         </button>
         <span class="res-num">${wtNum}.${resNum}</span>
         <span class="res-photo">
-            ${resource.photo ? `<img src="${resource.photo}" alt="Фото" class="res-photo-thumb">` : '<span style="color:#ccc;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-off-icon lucide-camera-off"><path d="M14.564 14.558a3 3 0 1 1-4.122-4.121"/><path d="m2 2 20 20"/><path d="M20 20H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 .819-.175"/><path d="M9.695 4.024A2 2 0 0 1 10.004 4h3.993a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v7.344"/></svg></span>'}
+            ${resource.photo ? `<img src="${resource.photo}" alt="Фото" class="res-photo-thumb">` : '<span style="color:#ccc;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-off-icon lucide-camera-off"><path d="M14.564 14.558a3 3 0 1 1-4.122-4.121"/><path d="m2 2 20 20"/><path d="M20 20H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 .819-.175"/><path d="M9.695 4.024A2 2 0 0 1 10.004 4h3.993a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v7.344"/></svg></span>'}
         </span>
         <span class="res-type">${resIcon}</span>
         <span class="res-name">${resource.name}</span>
@@ -219,11 +222,11 @@ function createExpenseResourceElement(resource, wtNum, resNum) {
         if (isExpanded) {
             detailsRow.classList.remove('active');
             expandBtn.classList.remove('expanded');
-            expandBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>';
+            expandBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>';
         } else {
             detailsRow.classList.add('active');
             expandBtn.classList.add('expanded');
-            expandBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-right-icon lucide-arrow-down-right"><path d="m7 7 10 10"/><path d="M17 7v10H7"/></svg>';
+            expandBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-right-icon lucide-arrow-down-right"><path d="m7 7 10 10"/><path d="M17 7v10H7"/></svg>';
         }
     });
 
@@ -259,9 +262,9 @@ function renderResourceDetails(resource, expenses) {
                         <td>${fmt(exp.actual_price)}</td>
                         <td>${fmt(exp.actual_quantity * exp.actual_price)}</td>
                         <td class="receipt-cell">
-                            ${renderReceiptThumb(exp.receipt_photo_1)}
-                            ${renderReceiptThumb(exp.receipt_photo_2)}
-                            ${renderReceiptThumb(exp.receipt_photo_3)}
+                            ${renderReceiptThumb(exp.receipt_photo_1, exp.id, 1)}
+                            ${renderReceiptThumb(exp.receipt_photo_2, exp.id, 2)}
+                            ${renderReceiptThumb(exp.receipt_photo_3, exp.id, 3)}
                         </td>
                         <td>${exp.comment || ''}</td>
                         <td>
@@ -292,9 +295,22 @@ function renderResourceDetails(resource, expenses) {
     `;
 }
 
-function renderReceiptThumb(url) {
+// Миниатюра чека. Раньше это была ссылка target="_blank": браузер
+// открывал сырой файл отдельной вкладкой, без масштабирования и
+// без возможности удалить снимок.
+function renderReceiptThumb(url, expenseId, idx) {
     if (!url) return '';
-    return `<a href="${url}" target="_blank" class="receipt-thumb-box"><img src="${url}"></a>`;
+    return `
+        <div class="receipt-thumb-box receipt-thumb-box--filled">
+            <img src="${url}" alt="Чек ${idx}" class="receipt-view" data-url="${url}">
+            <button type="button" class="receipt-del" title="Удалить чек" aria-label="Удалить чек"
+                    data-expense="${expenseId}" data-idx="${idx}">
+                <svg class="icon icon--sm" viewBox="0 0 24 24">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    `;
 }
 
 function setupAddFormListeners(container, resourceId) {
@@ -318,6 +334,35 @@ function setupAddFormListeners(container, resourceId) {
             const idx = box.dataset.idx;
             const input = container.querySelector(`.exp-file-${idx}`);
             input.click();
+        });
+    });
+
+    // Просмотр чека в полноэкранном просмотрщике
+    container.querySelectorAll('.receipt-view').forEach(img => {
+        img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openPhotoViewer(img.dataset.url);
+        });
+    });
+
+    // Удаление чека
+    container.querySelectorAll('.receipt-del').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!await uiConfirm('Фото чека будет удалено безвозвратно.', {
+                title: 'Удалить чек?', confirmText: 'Удалить', danger: true
+            })) return;
+
+            const { expense, idx } = btn.dataset;
+            try {
+                const res = await fetch(`/expenses/${expense}/receipt/${idx}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Не удалось удалить');
+                // Перерисовываем всю вкладку: суммы не меняются, но
+                // строка чеков должна обновиться из данных сервера.
+                await loadExpenses(selectedExpenseObjectId);
+            } catch (err) {
+                uiAlert('Ошибка удаления чека: ' + err.message);
+            }
         });
     });
 
@@ -351,7 +396,7 @@ async function saveNewExpense(resourceId, container) {
     const commentVal = container.querySelector('.exp-comment').value;
 
     if (!dateVal || !qtyVal || !priceVal) {
-        alert('Заполните дату, количество и цену');
+        uiAlert('Заполните дату, количество и цену');
         return;
     }
 
@@ -394,19 +439,19 @@ async function saveNewExpense(resourceId, container) {
 
     } catch (err) {
         console.error('Save error:', err);
-        alert('Ошибка сохранения: ' + err.message);
+        uiAlert('Ошибка сохранения: ' + err.message);
     }
 }
 
 async function deleteExpense(expenseId) {
-    if (!confirm('Удалить запись?')) return;
+    if (!await uiConfirm('Запись о расходе будет удалена.', { title: 'Удалить запись?', confirmText: 'Удалить', danger: true })) return;
     try {
         const res = await fetch(`/expenses/${expenseId}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Failed to delete');
         await loadExpenses(selectedExpenseObjectId);
     } catch (err) {
         console.error(err);
-        alert('Ошибка удаления');
+        uiAlert('Ошибка удаления');
     }
 }
 
@@ -454,7 +499,7 @@ function fmt(num) {
 // Генерация HTML для скачивания/печати расходов
 function downloadExpense() {
     if (!selectedExpenseObjectId || !expenseData || expenseData.length === 0) {
-        alert('Нет данных для скачивания');
+        uiAlert('Нет данных для скачивания');
         return;
     }
 
@@ -576,107 +621,17 @@ function downloadExpense() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Расход - ${objectName}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #fff;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #333;
-        }
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        .header p {
-            font-size: 14px;
-            color: #666;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-            font-size: 12px;
-        }
-        th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-        .stage-row td {
-            background-color: #e8f4ff;
-            font-size: 13px;
-            padding: 6px 8px;
-        }
-        .work-type-row {
-            background-color: #f9f9f9;
-        }
-        .work-type-row td {
-            font-weight: 600;
-            padding: 6px 8px;
-        }
-        .resource-row td {
-            padding: 6px 8px;
-        }
-        .expense-row {
-            background-color: #fafafa;
-        }
-        .expense-row td {
-            padding: 4px 8px;
-        }
-        .text-right {
-            text-align: right;
-        }
-        .type-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 3px;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-        }
-        .total-row {
-            background-color: #f0f7ff;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .total-row td {
-            padding: 12px 8px;
-            border: 2px solid #0067c0;
-        }
-        .over-budget {
-            color: #d32f2f !important;
-            font-weight: 700;
-        }
-        @media print {
-            body {
-                padding: 10px;
-            }
-            .header {
-                margin-bottom: 20px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/frontend/report.css?v=16">
+    <!-- Таблица широкая — печатаем альбомно -->
+    <style>@page { size: A4 landscape; margin: 10mm; }</style>
 </head>
 <body>
-    <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="logo" style="position:fixed;top:10px;right:10px;width:64px;height:auto;opacity:0.95;z-index:9999;">
     <div class="header">
-        <h1>Расход - ${objectName}</h1>
-        <p>Дата формирования: ${dateStr}</p>
+        <div>
+            <h1>${objectName}</h1>
+            <p>Расход · сформировано ${dateStr}</p>
+        </div>
+        <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="">
     </div>
     
     <table>

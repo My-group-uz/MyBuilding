@@ -3,47 +3,98 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f4f7fc">
     <title>MyBuilding — Объекты</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="budget.css">
-    <link rel="stylesheet" href="expense.css">
-    <link rel="stylesheet" href="analysis.css">
+    <!-- ?v= — метка версии. Браузер кэширует CSS агрессивно, и без неё
+         после правок стилей показывается старое оформление.
+         При следующем изменении стилей увеличить число. -->
+    <!-- Шрифт локальный: подключается первым, чтобы текст не перерисовывался -->
+    <link rel="preload" href="assets/fonts/onest-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="fonts.css?v=17">
+    <link rel="stylesheet" href="theme.css?v=17">
+    <link rel="stylesheet" href="components.css?v=17">
+    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="budget.css?v=17">
+    <link rel="stylesheet" href="expense.css?v=17">
+    <link rel="stylesheet" href="analysis.css?v=17">
+    <link rel="stylesheet" href="hero.css?v=17">
+    <link rel="stylesheet" href="dialog.css?v=17">
+    <link rel="stylesheet" href="lightbox.css?v=17">
+    <!-- Подключаются последними: перекрывают десктопные правила -->
+    <link rel="stylesheet" href="tabbar.css?v=17">
+    <link rel="stylesheet" href="mobile-tables.css?v=17">
 </head>
 
 <body>
+    <!-- Затемнение позади выехавшего сайдбара (только мобильные) -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <img id="sidebar-logo" src="assets/design_key.png" alt="logo" style="display:none;" />
-            <span>Мои объекты</span>
-            <button id="add-object">+</button>
+            <span class="sidebar-title">Мои объекты</span>
+            <button id="add-object" class="btn btn--primary btn--icon-sm" title="Добавить объект"
+                aria-label="Добавить объект">
+                <svg class="icon icon--sm" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+            </button>
         </div>
         <ul id="object-list" class="object-list"></ul>
+        <!-- Свернуть/развернуть на десктопе -->
+        <button id="sidebar-collapse" class="sidebar-collapse" title="Свернуть меню" aria-label="Свернуть меню">
+            <svg class="icon icon--sm" viewBox="0 0 24 24">
+                <path d="m15 18-6-6 6-6" />
+            </svg>
+        </button>
     </div>
     <div class="main-content">
-        <div id="tabs-actions-row"
-            style="display:none; align-items: center; justify-content: space-between; gap: 10px;">
-            <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
-            <div id="tabs" style="margin-top:30px;">
+        <div id="tabs-actions-row" style="display:none;">
+            <button id="sidebar-toggle" class="sidebar-toggle btn btn--secondary btn--icon" aria-label="Меню объектов">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
+            </button>
+            <div id="tabs">
                 <div class="tabs-header">
-                    <button class="tab-btn" data-tab="analysis">Анализ</button>
+                    <button class="tab-btn" data-tab="analysis">Аналитика</button>
                     <button class="tab-btn" data-tab="income">Приход</button>
                     <button class="tab-btn" data-tab="budget">Бюджет</button>
                     <button class="tab-btn" data-tab="expense">Расход</button>
+                    <button class="tab-btn" data-tab="settings">Настройки</button>
                 </div>
             </div>
-            <div id="object-actions" style="gap: 10px;">
+            <div id="object-actions">
                 <input id="rename-input" type="text" style="display:none;">
-                <button id="share-btn">Поделиться</button>
-                <button id="rename-btn">Переименовать</button>
-                <button id="delete-btn">Удалить</button>
+                <button id="share-btn" class="btn btn--secondary">
+                    <svg class="icon icon--sm" viewBox="0 0 24 24">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                        <path d="M16 6l-4-4-4 4" />
+                        <path d="M12 2v13" />
+                    </svg>
+                    Поделиться
+                </button>
+                <!-- Переименование и удаление переехали во вкладку
+                     «Настройки». Кнопки остаются в DOM скрытыми: и вкладка
+                     настроек, и меню «⋯» кликают их программно, поэтому
+                     обработчик остаётся один на всё приложение. -->
+                <button id="rename-btn" class="btn btn--secondary" hidden>Переименовать</button>
+                <button id="delete-btn" class="btn btn--secondary btn--danger" hidden>Удалить</button>
+                <button id="more-btn" class="more-btn btn btn--secondary btn--icon" title="Ещё" aria-label="Ещё">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                        <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                        <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                    </svg>
+                </button>
             </div>
         </div>
         <div id="tab-analysis" class="tab-content" style="display:none;">
             <div class="tab-actions">
                 <button class="icon-btn" id="download-analysis" title="Скачать">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-file-down-icon lucide-file-down">
                         <path
                             d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
@@ -57,15 +108,23 @@
         </div>
         <div id="tab-income" class="tab-content" style="display:none;">
             <div class="tab-actions">
+                <div class="search">
+                    <svg class="icon icon--sm search__icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input type="search" class="field search__input" id="search-income"
+                        placeholder="Поиск по дате, сумме, имени…" autocomplete="off">
+                </div>
                 <button class="icon-btn" id="add-income" title="Добавить">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="9" stroke="#0057d8" stroke-width="2" />
-                        <path d="M10 6v8M6 10h8" stroke="#0057d8" stroke-width="2" stroke-linecap="round" />
+                        <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2" />
+                        <path d="M10 6v8M6 10h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                     </svg>
                 </button>
                 <button class="icon-btn" id="download-income" title="Скачать">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-file-down-icon lucide-file-down">
                         <path
                             d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
@@ -86,7 +145,7 @@
                             <th>Кто передал</th>
                             <th>Кто получил</th>
                             <th>Комментарии</th>
-                            <th style="width:70px;"></th>
+                            <th class="col-actions"></th>
                         </tr>
                     </thead>
                     <tbody id="income-tbody">
@@ -94,8 +153,8 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="3" style="text-align:right;font-weight:600;">Итого:</td>
-                            <td id="income-total" style="font-weight:600;">0</td>
+                            <td colspan="3" class="total-label">Итого:</td>
+                            <td id="income-total" class="total-value">0</td>
                             <td colspan="3"></td>
                         </tr>
                     </tfoot>
@@ -106,17 +165,41 @@
         <!-- Модальное окно для добавления прихода -->
         <div id="income-modal" class="modal" style="display:none;">
             <div class="modal-content">
-                <span class="modal-close" id="income-modal-close">&times;</span>
-                <h3>Добавить приход</h3>
-                <form id="income-form">
-                    <label>Дата:<br><input type="date" id="income-date" required></label><br>
-                    <label>Фото:<br><input type="file" id="income-photo" accept="image/*"></label><br>
-                    <label>Сумма (в сумах):<br><input type="text" id="income-amount" required
-                            placeholder="0"></label><br>
-                    <label>Кто передал:<br><input type="text" id="income-from" required></label><br>
-                    <label>Кто получил:<br><input type="text" id="income-to" required></label><br>
-                    <label>Комментарии:<br><textarea id="income-comment"></textarea></label><br>
-                    <button type="submit" class="icon-btn" style="background:#0057d8;color:#fff;">Сохранить</button>
+                <button class="modal-close" id="income-modal-close" aria-label="Закрыть">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+                <h3 class="modal-title">Добавить приход</h3>
+                <form id="income-form" class="form">
+                    <div class="form-row">
+                        <label class="label" for="income-date">Дата</label>
+                        <input class="field" type="date" id="income-date" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="label" for="income-amount">Сумма (в сумах)</label>
+                        <input class="field" type="text" id="income-amount" inputmode="numeric" required
+                            placeholder="0">
+                    </div>
+                    <div class="form-row form-row--split">
+                        <div>
+                            <label class="label" for="income-from">Кто передал</label>
+                            <input class="field" type="text" id="income-from" required>
+                        </div>
+                        <div>
+                            <label class="label" for="income-to">Кто получил</label>
+                            <input class="field" type="text" id="income-to" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label class="label" for="income-comment">Комментарии</label>
+                        <textarea class="field" id="income-comment" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <label class="label" for="income-photo">Фото</label>
+                        <input class="field field--file" type="file" id="income-photo" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--lg btn--block">Сохранить</button>
                 </form>
                 <input type="hidden" id="income-edit-index">
             </div>
@@ -124,9 +207,17 @@
 
         <div id="tab-budget" class="tab-content" style="display:none;">
             <div class="tab-actions">
+                <div class="search">
+                    <svg class="icon icon--sm search__icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input type="search" class="field search__input" id="search-budget"
+                        placeholder="Поиск по ресурсу, этапу, поставщику…" autocomplete="off">
+                </div>
                 <button class="icon-btn" id="add-budget-group" title="Добавить этап">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-folder-down-icon lucide-folder-down">
                         <path
                             d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
@@ -136,7 +227,7 @@
                 </button>
                 <button class="icon-btn" id="download-budget" title="Скачать">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-file-down-icon lucide-file-down">
                         <path
                             d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
@@ -151,9 +242,17 @@
 
         <div id="tab-expense" class="tab-content" style="display:none;">
             <div class="tab-actions">
+                <div class="search">
+                    <svg class="icon icon--sm search__icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input type="search" class="field search__input" id="search-expense"
+                        placeholder="Поиск по ресурсу, этапу…" autocomplete="off">
+                </div>
                 <button class="icon-btn" id="download-expense" title="Скачать">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-file-down-icon lucide-file-down">
                         <path
                             d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
@@ -165,23 +264,117 @@
             </div>
             <div id="expense-container"></div>
         </div>
+
+        <!-- Настройки объекта: название, площадь, сроки, фоторендеры.
+             Раньше этот блок жил в начале Аналитики и занимал экран
+             данными, которые правят один раз при заведении объекта. -->
+        <div id="tab-settings" class="tab-content" style="display:none;">
+            <div id="settings-container"></div>
+        </div>
     </div>
-    <button id="sidebar-close" class="sidebar-close" style="display:none;">✕</button>
+    <button id="sidebar-close" class="sidebar-close btn btn--secondary btn--icon" style="display:none;"
+        aria-label="Закрыть меню">
+        <svg class="icon" viewBox="0 0 24 24">
+            <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+    </button>
 
     <!-- Модалка для просмотра фото -->
-    <div id="photo-modal" class="modal" style="display:none;">
-        <div class="modal-content"
-            style="max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;">
-            <span class="modal-close" id="photo-modal-close">&times;</span>
-            <img id="photo-modal-img" src=""
-                style="max-width:80vw;max-height:70vh;border-radius:10px;box-shadow:0 2px 16px #0002;" alt="Фото">
+    <!-- Просмотр фото: собственный полноэкранный слой, а не .modal.
+         Общая модалка ограничена шириной 460px и прокручивается — фото
+         в неё не помещалось и вылезало с полосой прокрутки. -->
+    <div id="photo-modal" class="lightbox" style="display:none;">
+        <div class="lightbox__bar">
+            <a class="lightbox__btn" id="photo-modal-open" href="#" target="_blank" rel="noopener"
+                title="Открыть в новой вкладке" aria-label="Открыть в новой вкладке">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M15 3h6v6" />
+                    <path d="M10 14 21 3" />
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                </svg>
+            </a>
+            <button class="lightbox__btn modal-close" id="photo-modal-close" title="Закрыть (Esc)"
+                aria-label="Закрыть">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <img id="photo-modal-img" class="lightbox__img" src="" alt="Фото">
+    </div>
+
+    <!-- =========================================================
+         Нижняя панель вкладок (только мобильные, ≤600px).
+         Кнопки намеренно носят класс .tab-btn — тогда setActiveTab()
+         подсвечивает и переключает их той же логикой, что и верхние,
+         без дублирования кода.
+         ========================================================= -->
+    <nav id="mobile-tabbar" class="tabbar" hidden>
+        <!-- Белая «таблетка», скользящая под активной вкладкой.
+             Позиция задаётся переменной --active-index из app.js -->
+        <span class="tabbar__pill" aria-hidden="true"></span>
+        <button class="tab-btn tabbar-btn" data-tab="analysis">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                <path d="m19 9-5 5-4-4-3 3" />
+            </svg>
+            <span>Аналитика</span>
+        </button>
+        <button class="tab-btn tabbar-btn" data-tab="income">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14" />
+                <path d="m19 12-7 7-7-7" />
+            </svg>
+            <span>Приход</span>
+        </button>
+        <button class="tab-btn tabbar-btn" data-tab="budget">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+            </svg>
+            <span>Бюджет</span>
+        </button>
+        <button class="tab-btn tabbar-btn" data-tab="expense">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19V5" />
+                <path d="m5 12 7-7 7 7" />
+            </svg>
+            <span>Расход</span>
+        </button>
+        <button class="tab-btn tabbar-btn" data-tab="settings">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.61.77 1 1.42 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span>Ещё</span>
+        </button>
+    </nav>
+
+    <!-- Меню «⋯»: действия над объектом, вынесенные с узких экранов -->
+    <div id="more-sheet" class="more-sheet" hidden>
+        <div class="more-sheet__panel">
+            <!-- Переименование и удаление живут во вкладке «Настройки» —
+                 здесь остаётся только то, что нужно по ходу работы. -->
+            <button class="more-sheet__item" data-action="share">Поделиться</button>
+            <button class="more-sheet__item more-sheet__cancel" data-action="cancel">Отмена</button>
         </div>
     </div>
 
-    <script src="app.js"></script>
-    <script src="budget.js"></script>
-    <script src="expense.js"></script>
-    <script src="analysis.js"></script>
+    <!-- Первым: остальные модули используют uiAlert / uiConfirm / uiPrompt -->
+    <script src="dialog.js?v=17"></script>
+    <script src="app.js?v=17"></script>
+    <script src="budget.js?v=17"></script>
+    <script src="expense.js?v=17"></script>
+    <script src="analysis.js?v=17"></script>
+    <!-- После analysis.js: использует его analysisData и работу с фото -->
+    <script src="settings.js?v=17"></script>
+    <!-- После остальных: фильтрует уже отрисованный DOM -->
+    <script src="search.js?v=17"></script>
 </body>
 
 </html>

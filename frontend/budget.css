@@ -9,9 +9,9 @@
     padding: 16px;
     background: #f0f7ff;
     border-radius: 8px;
-    font-size: 18px;
-    font-weight: 700;
-    color: #0067c0;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
     display: flex;
     justify-content: space-between;
     border: 2px solid #cce8ff;
@@ -38,8 +38,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-weight: 700;
-    font-size: 15px;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-md);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -47,7 +47,7 @@
 .collapse-btn {
     cursor: pointer;
     user-select: none;
-    font-size: 14px;
+    font-size: var(--fs-md);
     color: #666;
     width: 20px;
     text-align: center;
@@ -64,7 +64,7 @@
 }
 
 .collapse-btn:hover {
-    color: #0067c0;
+    color: var(--c-primary);
 }
 
 .stage-name {
@@ -79,47 +79,55 @@
 }
 
 .stage-sum {
-    font-weight: 700;
-    color: #0067c0;
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
     margin-left: auto;
     padding: 4px 12px;
-    background: #e5f3ff;
+    background: var(--c-primary-soft);
     border-radius: 4px;
 }
 
+/* Компактная кнопка внутри строк таблицы.
+   Токены те же, что у .btn — отличается только размером. */
 .btn-icon {
     background: transparent;
-    border: 1px solid #d1d1d1;
+    border: 1px solid var(--c-border);
     cursor: pointer;
-    padding: 6px;
-    border-radius: 4px;
-    font-size: 14px;
-    color: #888;
-    transition: all 0.2s;
+    padding: 0;
+    border-radius: var(--r-sm);
+    font-size: var(--fs-md);
+    line-height: 1;
+    color: var(--c-text-subtle);
+    transition: background var(--t-fast), border-color var(--t-fast),
+        color var(--t-fast), transform var(--t-fast);
     width: 28px;
     height: 28px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
 
 .btn-icon:hover {
-    background: #f0f0f0;
-    border-color: #bbb;
+    background: var(--c-surface-alt);
+    border-color: var(--c-border-strong);
 }
 
-/* Gray by default, colored on hover */
+.btn-icon:active {
+    transform: scale(0.94);
+}
+
+/* Нейтральные по умолчанию, окрашиваются при наведении */
 .btn-add:hover {
-    background: #e5f3ff;
-    color: #0067c0;
-    border-color: #0067c0;
+    background: var(--c-primary-soft);
+    color: var(--c-primary);
+    border-color: var(--c-primary);
 }
 
 .btn-delete:hover {
-    background: #ffe5e5;
-    color: #d80027;
-    border-color: #d80027;
+    background: var(--c-danger-soft);
+    color: var(--c-danger);
+    border-color: var(--c-danger);
 }
 
 /* Work Type (Вид работ) */
@@ -155,14 +163,14 @@
     grid-template-columns: 40px 20px 1fr 50px 100px 100px 120px 60px 30px;
     gap: 8px;
     align-items: center;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-semibold);
     border-bottom: 1px solid #e8e8e8;
 }
 
 .wt-num {
     color: #888;
-    font-weight: 700;
+    font-weight: var(--fw-semibold);
 }
 
 .wt-name {
@@ -196,8 +204,8 @@
 
 .wt-price,
 .wt-sum {
-    font-weight: 600;
-    color: #0067c0;
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
 }
 
 /* Resource (Ресурс) */
@@ -219,11 +227,11 @@
     margin: 8px 24px 4px 48px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 40px 60px 50px minmax(300px, 1fr) 35px 100px 100px 120px 200px 40px;
+    grid-template-columns: 40px 60px 50px minmax(320px, 2fr) 50px 100px 110px 120px minmax(140px, 1fr) 40px;
     gap: 8px;
     align-items: center;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
     color: #888;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -236,10 +244,10 @@
     margin: 2px 24px 2px 48px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 40px 60px 50px minmax(300px, 1fr) 35px 100px 100px 120px 200px 40px;
+    grid-template-columns: 40px 60px 50px minmax(320px, 2fr) 50px 100px 110px 120px minmax(140px, 1fr) 40px;
     gap: 8px;
     align-items: center;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     background: #fff;
     border: 1px solid #f0f0f0;
     border-radius: 4px;
@@ -257,7 +265,7 @@
 
 .res-num {
     color: #aaa;
-    font-size: 12px;
+    font-size: var(--fs-xs);
     text-align: center;
 }
 
@@ -307,7 +315,7 @@
     width: 24px;
     height: 24px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--fs-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -315,12 +323,12 @@
 }
 
 .res-photo-view:hover {
-    background: #e5f3ff;
+    background: var(--c-primary-soft);
     transform: scale(1.1);
 }
 
 .res-photo-delete:hover {
-    background: #ffe5e5;
+    background: var(--c-danger-soft);
     transform: scale(1.1);
 }
 
@@ -331,7 +339,7 @@
     width: 50px;
     height: 50px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: var(--fs-xl);
     transition: all 0.2s;
     display: flex;
     align-items: center;
@@ -339,8 +347,8 @@
 }
 
 .btn-upload-photo:hover {
-    background: #e5f3ff;
-    border-color: #0067c0;
+    background: var(--c-primary-soft);
+    border-color: var(--c-primary);
 }
 
 .res-type,
@@ -375,8 +383,8 @@
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-md);
     cursor: pointer;
     transition: all 0.2s;
     padding: 4px;
@@ -409,8 +417,8 @@
 }
 
 .res-sum {
-    font-weight: 600;
-    color: #0067c0;
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
 }
 
 /* Inline Editing */
@@ -418,7 +426,7 @@
 .inline-edit-select {
     width: 100%;
     padding: 4px 8px;
-    border: 2px solid #0067c0;
+    border: 2px solid var(--c-primary);
     border-radius: 4px;
     font-size: inherit;
     font-family: inherit;
@@ -436,38 +444,40 @@
     transition: background 0.2s;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1200px) {
+/* Адаптив: брейкпоинты синхронизированы с theme.css (1024 → 600) */
+@media (max-width: 1024px) {
     .budget-work-type-header {
         grid-template-columns: 40px 20px 1fr 60px 80px 80px 100px 50px 30px;
-        font-size: 13px;
+        font-size: var(--fs-sm);
     }
 
     .budget-resource-header,
     .budget-resource {
-        grid-template-columns: 40px 60px 50px minmax(250px, 1fr) 40px 80px 80px 100px 150px 40px;
-        font-size: 12px;
+        grid-template-columns: 40px 60px 50px minmax(200px, 2fr) 45px 80px 90px 100px minmax(110px, 1fr) 40px;
+        font-size: var(--fs-xs);
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 600px) {
 
+    /* Сетку СОХРАНЯЕМ. Прежний display:flex + flex-wrap ломал
+       соответствие колонок и заголовков — строки «расползались».
+       Вместо переноса даём горизонтальный скролл (см. style.css). */
     .budget-work-type-header,
     .budget-resource-header,
     .budget-resource {
-        display: flex;
-        flex-wrap: wrap;
+        min-width: 900px;
     }
 
     .budget-resource {
-        margin: 2px 16px;
+        margin: 2px var(--sp-4);
     }
 }
 
 /* Over budget indicator */
 .over-budget {
-    color: #d32f2f !important;
-    font-weight: 700;
+    color: var(--c-danger) !important;
+    font-weight: var(--fw-semibold);
 }
 
 /* Expense receipt thumbnails */

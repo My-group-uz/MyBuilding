@@ -1,0 +1,281 @@
+/* =====================================================================
+   hero.css — витрина объекта во вкладке «Аналитика»
+
+   Две колонки: слева рендеры (сменяются каждые 3 секунды), справа
+   паспорт объекта — заказчик, телефон, адрес, площадь — и под ними
+   цена за квадратный метр.
+   ===================================================================== */
+
+.hero {
+    display: grid;
+    /* Рендер фиксированной ширины, данные забирают остаток:
+       так карточка не «дышит» при разной длине адреса. */
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    gap: var(--sp-4);
+    align-items: stretch;
+    margin-bottom: var(--sp-5);
+}
+
+/* ---------------------------------------------------------------------
+   Левая колонка — рендеры
+   --------------------------------------------------------------------- */
+.hero__media {
+    position: relative;
+    min-height: 200px;
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: var(--c-surface-alt);
+    box-shadow: var(--sh-sm);
+    /* Кадры выходят за пределы блока — обрезаем по скруглению */
+    isolation: isolate;
+}
+
+.hero__slides {
+    position: absolute;
+    inset: 0;
+}
+
+/* Кадры лежат стопкой, видимость переключается прозрачностью.
+   Растворение вместо сдвига: рендеры одного объекта похожи,
+   и перелистывание выглядело бы дёрганьем. */
+.hero__slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    /* Лёгкий наезд камеры за время показа кадра */
+    transform: scale(1.04);
+}
+
+.hero__slide.active {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.8s ease, transform 4s ease-out;
+}
+
+/* Затемнение снизу: без него светлый рендер съедает белый заголовок */
+.hero__scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top,
+            rgba(0, 0, 0, 0.62) 0%,
+            rgba(0, 0, 0, 0.26) 34%,
+            rgba(0, 0, 0, 0) 62%);
+}
+
+.hero__caption {
+    position: absolute;
+    left: var(--sp-4);
+    right: var(--sp-4);
+    bottom: var(--sp-4);
+}
+
+.hero__title {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    line-height: 1.25;
+    letter-spacing: var(--ls-tight);
+    color: #fff;
+    /* Тень читаемости на случай светлого участка под текстом */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+/* --- Состояние без рендеров --- */
+.hero__media--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        repeating-linear-gradient(45deg,
+            var(--c-surface-alt) 0 12px,
+            var(--c-surface) 12px 24px);
+    border: 1px dashed var(--c-border-strong);
+    box-shadow: none;
+}
+
+.hero__hint {
+    font-size: var(--fs-sm);
+    color: var(--c-text-subtle);
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* --- Полоска обратного отсчёта --- */
+.hero__progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.hero__progress-fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: #fff;
+    /* Длительность совпадает с HERO_INTERVAL_MS в analysis.js.
+       При изменении интервала править оба места. */
+    animation: hero-progress 3s linear infinite;
+}
+
+@keyframes hero-progress {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
+}
+
+/* ---------------------------------------------------------------------
+   Правая колонка — паспорт объекта
+   --------------------------------------------------------------------- */
+.hero-facts {
+    display: flex;
+    flex-direction: column;
+    padding: var(--sp-4) var(--sp-5);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-xs);
+}
+
+.hero-facts__name {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--ls-tight);
+    color: var(--c-text);
+    padding-bottom: var(--sp-3);
+    margin-bottom: var(--sp-1);
+    border-bottom: 1px solid var(--c-border-light);
+}
+
+.hero-facts__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding: var(--sp-2) 0;
+}
+
+.hero-facts__label {
+    flex-shrink: 0;
+    font-size: var(--fs-sm);
+    color: var(--c-text-subtle);
+}
+
+.hero-facts__value {
+    font-size: var(--fs-md);
+    font-weight: var(--fw-semibold);
+    color: var(--c-text);
+    text-align: right;
+    /* Длинный адрес переносится, а не растягивает карточку */
+    overflow-wrap: anywhere;
+}
+
+.hero-facts__value.is-empty {
+    font-weight: var(--fw-regular);
+    color: var(--c-text-faint);
+}
+
+.hero-facts__value--link {
+    color: var(--c-primary);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.hero-facts__value--link:hover {
+    text-decoration: underline;
+}
+
+/* --- Цена за м² --- */
+.hero-prices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-3);
+    /* Прижимаем к низу: колонка тянется по высоте рендера */
+    margin-top: auto;
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--c-border-light);
+}
+
+.hero-price {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--c-surface-alt);
+    border-radius: var(--r-md);
+}
+
+.hero-price__label {
+    font-size: var(--fs-xs);
+    color: var(--c-text-subtle);
+}
+
+.hero-price__value {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    color: var(--c-primary);
+    overflow-wrap: anywhere;
+}
+
+.hero-price__value--fact {
+    color: var(--c-success);
+}
+
+/* ---------------------------------------------------------------------
+   Адаптив
+   --------------------------------------------------------------------- */
+
+/* Планшет: рендер уже, данным нужен воздух */
+@media (max-width: 1024px) {
+    .hero {
+        grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+        gap: var(--sp-3);
+    }
+
+    .hero-facts {
+        padding: var(--sp-3) var(--sp-4);
+    }
+}
+
+/* Мобильные: колонки складываются в стопку */
+@media (max-width: 600px) {
+    .hero {
+        grid-template-columns: 1fr;
+        gap: var(--sp-3);
+        margin-bottom: var(--sp-4);
+    }
+
+    .hero__media {
+        min-height: 0;
+        height: 170px;
+    }
+
+    /* Название уже есть поверх рендера — второй раз не повторяем */
+    .hero-facts__name {
+        display: none;
+    }
+
+    .hero-prices {
+        margin-top: var(--sp-2);
+    }
+}
+
+/* Пользователь просил не анимировать — показываем статичный кадр */
+@media (prefers-reduced-motion: reduce) {
+    .hero__slide {
+        transform: none;
+    }
+
+    .hero__progress-fill {
+        animation: none;
+        width: 100%;
+    }
+}
