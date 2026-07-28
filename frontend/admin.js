@@ -73,7 +73,7 @@ function render() {
             </div>
 
             <dl class="org-card__facts">
-                <div><dt>Почта</dt><dd>${esc(o.email)}</dd></div>
+                <div><dt>Почта</dt><dd>${o.email ? esc(o.email) : '—'}</dd></div>
                 <div><dt>Телефон</dt><dd>${o.phone ? esc(o.phone) : '—'}</dd></div>
                 <div><dt>Объектов</dt><dd>${o.objects_count ?? 0}</dd></div>
                 <div><dt>Google</dt><dd>${o.has_google ? 'привязан' : '—'}</dd></div>
@@ -150,6 +150,12 @@ form.addEventListener('submit', async (e) => {
         email: document.getElementById('org-email').value.trim(),
         status: document.getElementById('org-status').value
     };
+
+    // Логином служит любое из двух полей, но одно из них нужно обязательно
+    if (!payload.email && !payload.phone) {
+        showFormError('Укажите почту или телефон — это логин для входа');
+        return;
+    }
 
     const password = document.getElementById('org-password').value;
     // При правке пустой пароль означает «не менять», при создании — обязателен

@@ -30,7 +30,7 @@ TABLES = [
         name          TEXT NOT NULL,
         full_name     TEXT,
         phone         TEXT,
-        email         TEXT NOT NULL,
+        email         TEXT,
         password_hash TEXT,
         logo          TEXT,
         status        TEXT NOT NULL DEFAULT 'active',
@@ -190,6 +190,13 @@ MIGRATIONS = [
     "ALTER TABLE objects ADD COLUMN IF NOT EXISTS organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE;",
     "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS google_sub TEXT;",
     "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS logo TEXT;",
+
+    # Логином служит и почта, и телефон, поэтому обязательна не почта,
+    # а наличие хотя бы одного из них — это проверяет приложение.
+    "ALTER TABLE organizations ALTER COLUMN email DROP NOT NULL;",
+    # Пустая строка вместо NULL сломала бы уникальный индекс: два таких
+    # значения равны между собой, а два NULL — нет.
+    "UPDATE organizations SET email=NULL WHERE email='';",
 ]
 
 
@@ -211,6 +218,9 @@ INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_objects_org ON objects (organization_id, id);",
     # Вход по почте и через Google — оба ищут по одному значению
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_org_email ON organizations (lower(email));",
+    # Телефон — такой же логин, как почта, и должен быть уникален.
+    # Частичный индекс: организаций без телефона может быть сколько угодно.
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_org_phone ON organizations (phone) WHERE phone IS NOT NULL;",
     "CREATE INDEX IF NOT EXISTS idx_org_google ON organizations (google_sub);",
 
     "CREATE INDEX IF NOT EXISTS idx_incomes_object ON incomes (object_id, date);",

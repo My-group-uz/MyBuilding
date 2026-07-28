@@ -48,6 +48,39 @@ UPLOAD_DIR = storage.UPLOAD_DIR
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# Код страны по умолчанию: подставляется, когда номер введён без него.
+DEFAULT_PHONE_CODE = "998"
+
+
+def normalize_phone(value: str) -> str:
+    """Телефон в едином виде +998XXXXXXXXX.
+
+    Один и тот же номер записывают по-разному: «+998 90 123-45-67»,
+    «998901234567», «901234567». Логин ищет точное совпадение, поэтому
+    и при сохранении, и при входе номер приводится к одной форме —
+    иначе организация не войдёт под тем же номером, что завела.
+
+    Номер с другим кодом страны сохраняется как есть: приложением
+    пользуются не только из Узбекистана.
+    """
+    digits = re.sub(r"\D", "", value or "")
+    if not digits:
+        return ""
+
+    # 9 цифр — местный номер без кода страны
+    if len(digits) == 9:
+        digits = DEFAULT_PHONE_CODE + digits
+    # 8 90 123 45 67 — набор внутри страны, где 8 заменяет код
+    elif len(digits) == 10 and digits.startswith("8") and not value.strip().startswith("+"):
+        digits = DEFAULT_PHONE_CODE + digits[1:]
+
+    return "+" + digits
+
+
+def looks_like_phone(value: str) -> bool:
+    """Строка похожа на номер, а не на почту или логин суперадминистратора."""
+    return bool(value) and "@" not in value and re.fullmatch(r"[\d\s()+\-]+", value) is not None
+
 
 def _org_public(row) -> dict:
     """Организация без пароля: наружу хеш не отдаём никогда."""
@@ -139,10 +172,18 @@ def register_auth_routes(app):
             _set_session(response, {"role": "superadmin"})
             return {"role": "superadmin", "redirect": "/frontend/admin.html"}
 
+        # Введённый номер приводится к тому же виду, в каком хранится,
+        # поэтому «+998 90 123 45 67» и «901234567» — один и тот же логин.
+        phone = normalize_phone(login_value) if looks_like_phone(login_value) else ""
+
         async with app.state.db.acquire() as conn:
             row = await conn.fetchrow(
-                "SELECT * FROM organizations WHERE lower(email)=lower($1) OR phone=$1",
-                login_value,
+                """
+                SELECT * FROM organizations
+                WHERE (email IS NOT NULL AND lower(email)=lower($1))
+                   OR ($2 <> '' AND phone=$2)
+                """,
+                login_value, phone,
             )
 
         if not row or not auth.verify_password(password, row["password_hash"] or ""):
@@ -265,21 +306,32 @@ def register_auth_routes(app):
 
         name = (data.get("name") or "").strip()
         email = (data.get("email") or "").strip()
+        phone = normalize_phone(data.get("phone") or "")
         password = data.get("password") or ""
 
         if not name:
             raise HTTPException(status_code=400, detail="Укажите название организации")
-        if not EMAIL_RE.match(email):
+        # Логином служит почта или телефон, поэтому обязательно не
+        # конкретное поле, а наличие хотя бы одного: без них организация
+        # не сможет войти.
+        if not email and not phone:
+            raise HTTPException(
+                status_code=400, detail="Укажите почту или телефон — это логин для входа"
+            )
+        if email and not EMAIL_RE.match(email):
             raise HTTPException(status_code=400, detail="Некорректная почта")
         if len(password) < 4:
             raise HTTPException(status_code=400, detail="Пароль короче 4 символов")
 
         async with app.state.db.acquire() as conn:
-            exists = await conn.fetchval(
+            if email and await conn.fetchval(
                 "SELECT 1 FROM organizations WHERE lower(email)=lower($1)", email
-            )
-            if exists:
+            ):
                 raise HTTPException(status_code=409, detail="Такая почта уже зарегистрирована")
+            if phone and await conn.fetchval(
+                "SELECT 1 FROM organizations WHERE phone=$1", phone
+            ):
+                raise HTTPException(status_code=409, detail="Такой телефон уже зарегистрирован")
 
             row = await conn.fetchrow("""
                 INSERT INTO organizations (name, full_name, phone, email, password_hash, status)
@@ -287,8 +339,8 @@ def register_auth_routes(app):
             """,
                 name,
                 (data.get("full_name") or "").strip() or None,
-                (data.get("phone") or "").strip() or None,
-                email,
+                phone or None,
+                email or None,
                 auth.hash_password(password),
                 data.get("status") if data.get("status") in ("active", "blocked") else "active",
             )
@@ -305,21 +357,57 @@ def register_auth_routes(app):
     async def update_org(org_id: int, request: Request, data: dict):
         require_superadmin(request)
 
+        async with app.state.db.acquire() as conn:
+            current = await conn.fetchrow(
+                "SELECT email, phone FROM organizations WHERE id=$1", org_id
+            )
+        if not current:
+            raise HTTPException(status_code=404, detail="Организация не найдена")
+
         fields, params, idx = [], [], 1
 
         for key, column in (("name", "name"), ("full_name", "full_name"),
-                            ("phone", "phone"), ("logo", "logo")):
+                            ("logo", "logo")):
             if key in data:
                 fields.append(f"{column}=${idx}")
                 params.append((data.get(key) or "").strip() or None)
                 idx += 1
 
+        email = (data.get("email") or "").strip() if "email" in data else current["email"]
+        phone = (normalize_phone(data.get("phone") or "")
+                 if "phone" in data else current["phone"])
+
+        # Стереть оба поля нельзя: организация лишилась бы логина
+        if not email and not phone:
+            raise HTTPException(
+                status_code=400, detail="Оставьте почту или телефон — это логин для входа"
+            )
+
         if "email" in data:
-            email = (data.get("email") or "").strip()
-            if not EMAIL_RE.match(email):
+            if email and not EMAIL_RE.match(email):
                 raise HTTPException(status_code=400, detail="Некорректная почта")
+            if email:
+                async with app.state.db.acquire() as conn:
+                    taken = await conn.fetchval(
+                        "SELECT 1 FROM organizations WHERE lower(email)=lower($1) AND id<>$2",
+                        email, org_id,
+                    )
+                if taken:
+                    raise HTTPException(status_code=409, detail="Такая почта уже зарегистрирована")
             fields.append(f"email=${idx}")
-            params.append(email)
+            params.append(email or None)
+            idx += 1
+
+        if "phone" in data:
+            if phone:
+                async with app.state.db.acquire() as conn:
+                    taken = await conn.fetchval(
+                        "SELECT 1 FROM organizations WHERE phone=$1 AND id<>$2", phone, org_id
+                    )
+                if taken:
+                    raise HTTPException(status_code=409, detail="Такой телефон уже зарегистрирован")
+            fields.append(f"phone=${idx}")
+            params.append(phone or None)
             idx += 1
 
         if "status" in data:
