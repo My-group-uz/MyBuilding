@@ -18,15 +18,24 @@ import subprocess
 import shutil
 
 import auth
+import storage
 from auth_api import register_auth_routes
+
+# Пути к файлам проекта считаем от расположения этого модуля:
+# рабочий каталог процесса на Railway не совпадает с папкой проекта.
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = FastAPI()
 DATABASE_URL = os.getenv("DATABASE_URL")
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Каталог загрузок выбирается автоматически: Volume на Railway,
+# если он подключён, иначе локальная папка. Подробности в storage.py.
+UPLOAD_DIR = storage.UPLOAD_DIR
+
+# Статика фронтенда — рядом с кодом, а не относительно рабочего каталога:
+# Railway запускает процесс не из папки проекта.
+app.mount("/frontend", StaticFiles(directory=os.path.join(_BASE_DIR, "frontend")), name="frontend")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 register_auth_routes(app)
 
@@ -133,13 +142,30 @@ async def get_incomes(object_id: int):
 
 @app.get('/health')
 async def health():
-    """Simple health check that verifies DB connection."""
+    """Проверка живости для Railway плюс диагностика настроек.
+
+    Показывает, подключён ли постоянный диск и настроен ли вход через
+    Google: после деплоя это единственный способ убедиться, что
+    переменные окружения дошли до приложения."""
     try:
         async with app.state.db.acquire() as conn:
             await conn.fetchval('SELECT 1')
-        return {"status": "ok"}
+        db_ok = True
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+    from auth_api import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+
+    return {
+        "status": "ok",
+        "database": db_ok,
+        "storage": storage.describe(),
+        "google_auth": bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET),
+        # Собственный SECRET_KEY обязателен: со сгенерированным
+        # пользователей разлогинивает при каждом перезапуске
+        "secret_key_set": bool(os.getenv("SECRET_KEY")),
+        "cookie_secure": os.getenv("COOKIE_SECURE", "0") == "1",
+    }
 
 
 @app.get('/uploads/list')
@@ -855,9 +881,8 @@ async def root_redirect():
     return RedirectResponse(url="/frontend/login.html")
 
 # === Budget API ===
-# Пути абсолютные: Railway запускает процесс не из папки проекта,
-# и относительный open() там не находит файл.
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Пути абсолютные: относительный open() не нашёл бы файл, когда
+# рабочий каталог процесса отличается от папки проекта.
 exec(open(os.path.join(_BASE_DIR, "budget_api.py"), encoding="utf-8").read())
 
 # === Expense API ===

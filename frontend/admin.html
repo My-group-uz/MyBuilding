@@ -52,6 +52,54 @@
         </div>
 
         <div id="org-list" class="org-list"></div>
+
+        <!-- Настройка входа через Google: ключи можно вписать здесь,
+             без правки переменных окружения и передеплоя -->
+        <section class="admin-panel" id="google-panel">
+            <button type="button" class="admin-panel__head" id="google-toggle" aria-expanded="false">
+                <span>
+                    <strong>Вход через Google</strong>
+                    <span class="admin-panel__state" id="google-state">не настроен</span>
+                </span>
+                <svg class="icon icon--sm" viewBox="0 0 24 24">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            </button>
+
+            <div class="admin-panel__body" id="google-body" hidden>
+                <ol class="admin-steps">
+                    <li>Откройте <a href="https://console.cloud.google.com/apis/credentials" target="_blank"
+                            rel="noopener">Google Cloud Console → Credentials</a></li>
+                    <li>Создайте <b>OAuth client ID</b>, тип <b>Web application</b></li>
+                    <li>В поле <b>Authorized redirect URIs</b> вставьте адрес ниже</li>
+                    <li>Скопируйте Client ID и Client secret в поля формы</li>
+                </ol>
+
+                <div class="form-row">
+                    <label class="label">Адрес возврата (Authorized redirect URI)</label>
+                    <div class="admin-copy">
+                        <code id="google-redirect">—</code>
+                        <button type="button" class="btn btn--secondary" id="copy-redirect">Копировать</button>
+                    </div>
+                </div>
+
+                <div id="google-error" class="auth-error" hidden></div>
+
+                <form id="google-form" class="form">
+                    <div class="form-row">
+                        <label class="label" for="google-client-id">Client ID</label>
+                        <input class="field" type="text" id="google-client-id"
+                            placeholder="123456789-xxxx.apps.googleusercontent.com" autocomplete="off">
+                    </div>
+                    <div class="form-row">
+                        <label class="label" for="google-client-secret">Client secret</label>
+                        <input class="field" type="password" id="google-client-secret"
+                            placeholder="Оставьте пустым, чтобы не менять" autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn btn--primary" id="google-save">Сохранить</button>
+                </form>
+            </div>
+        </section>
     </main>
 
     <!-- Форма организации: одна и та же для создания и правки -->

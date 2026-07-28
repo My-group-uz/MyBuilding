@@ -139,6 +139,18 @@ TABLES = [
     );
     """,
 
+    # --- Настройки приложения ---
+    # Ключи Google OAuth, задаваемые из админки. Переменные окружения
+    # имеют приоритет, но их правка на Railway перезапускает контейнер —
+    # ради одной пары строк это лишний простой.
+    """
+    CREATE TABLE IF NOT EXISTS app_settings (
+        key        TEXT PRIMARY KEY,
+        value      TEXT,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    """,
+
     # --- Токены публичных ссылок ---
     """
     CREATE TABLE IF NOT EXISTS share_tokens (

@@ -270,4 +270,91 @@ document.getElementById('logout').onclick = async () => {
     location.replace('/frontend/login.html');
 };
 
+/* ---------------------------------------------------------------------
+   Настройка входа через Google
+   --------------------------------------------------------------------- */
+const googleBody = document.getElementById('google-body');
+const googleError = document.getElementById('google-error');
+
+document.getElementById('google-toggle').addEventListener('click', (e) => {
+    const open = googleBody.hidden;
+    googleBody.hidden = !open;
+    e.currentTarget.setAttribute('aria-expanded', String(open));
+    e.currentTarget.classList.toggle('is-open', open);
+});
+
+async function loadGoogleSettings() {
+    try {
+        const res = await fetch('/api/admin/google');
+        if (!res.ok) return;
+        const cfg = await res.json();
+
+        document.getElementById('google-redirect').textContent = cfg.redirect_uri;
+        document.getElementById('google-client-id').value = cfg.client_id || '';
+
+        const state = document.getElementById('google-state');
+        state.textContent = cfg.configured ? 'настроен' : 'не настроен';
+        state.classList.toggle('is-on', cfg.configured);
+
+        // Ключи из переменных окружения через API не переопределить —
+        // форму блокируем, чтобы правки не пропадали молча
+        if (cfg.locked_by_env) {
+            googleBody.querySelectorAll('input, #google-save').forEach(el => el.disabled = true);
+            googleError.textContent = 'Ключи заданы переменными окружения на хостинге. Здесь их изменить нельзя.';
+            googleError.hidden = false;
+        }
+    } catch (e) {
+        // Настройка Google не критична — список организаций важнее
+    }
+}
+
+document.getElementById('google-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    googleError.hidden = true;
+
+    const btn = document.getElementById('google-save');
+    btn.disabled = true;
+    btn.textContent = 'Сохраняем…';
+
+    try {
+        const res = await fetch('/api/admin/google', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                client_id: document.getElementById('google-client-id').value.trim(),
+                client_secret: document.getElementById('google-client-secret').value.trim()
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            googleError.textContent = data.detail || 'Не удалось сохранить';
+            googleError.hidden = false;
+            return;
+        }
+
+        document.getElementById('google-client-secret').value = '';
+        await loadGoogleSettings();
+        uiAlert(data.configured
+            ? 'Вход через Google включён. Кнопка появится на странице входа.'
+            : 'Ключи очищены. Вход через Google отключён.',
+            { title: 'Готово' });
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Сохранить';
+    }
+});
+
+document.getElementById('copy-redirect').addEventListener('click', async () => {
+    const value = document.getElementById('google-redirect').textContent;
+    try {
+        await navigator.clipboard.writeText(value);
+        uiAlert('Адрес скопирован. Вставьте его в Authorized redirect URIs.', { title: 'Скопировано' });
+    } catch (e) {
+        // Буфер недоступен вне HTTPS — показываем адрес для ручного копирования
+        uiPrompt('Скопируйте адрес вручную', { title: 'Адрес возврата', value, confirmText: 'Готово' });
+    }
+});
+
 loadOrganizations();
+loadGoogleSettings();

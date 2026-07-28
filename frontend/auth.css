@@ -317,6 +317,90 @@
     max-width: 480px;
 }
 
+/* --- Сворачиваемая панель настроек --- */
+.admin-panel {
+    margin-top: var(--sp-5);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+}
+
+.admin-panel__head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: var(--fs-md);
+    color: var(--c-text);
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-panel__head .icon {
+    flex-shrink: 0;
+    color: var(--c-text-subtle);
+    transition: transform var(--t-base);
+}
+
+.admin-panel__head.is-open .icon {
+    transform: rotate(180deg);
+}
+
+.admin-panel__state {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--fs-sm);
+    color: var(--c-text-subtle);
+}
+
+.admin-panel__state.is-on {
+    color: #2e9e4f;
+}
+
+.admin-panel__body {
+    padding: 0 var(--sp-4) var(--sp-4);
+    border-top: 1px solid var(--c-border-light);
+    padding-top: var(--sp-4);
+}
+
+.admin-steps {
+    margin: 0 0 var(--sp-4) var(--sp-4);
+    padding: 0;
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+    line-height: 1.7;
+}
+
+.admin-steps a {
+    color: var(--c-primary);
+}
+
+/* Адрес возврата: моноширинный, переносится по символам —
+   длинный домен иначе растягивает панель */
+.admin-copy {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.admin-copy code {
+    flex: 1;
+    min-width: 0;
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--c-surface-alt);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: var(--fs-sm);
+    overflow-wrap: anywhere;
+}
+
 /* ---------------------------------------------------------------------
    Мобильные
    --------------------------------------------------------------------- */
@@ -360,5 +444,20 @@
         border: none;
         box-shadow: none;
         background: transparent;
+    }
+
+    /* Адрес возврата и кнопка в строку не помещаются */
+    .admin-copy {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-copy .btn {
+        width: 100%;
+        min-height: var(--tap);
+    }
+
+    .admin-steps {
+        margin-left: var(--sp-4);
     }
 }

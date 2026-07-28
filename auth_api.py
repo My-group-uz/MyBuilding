@@ -14,14 +14,37 @@ from fastapi import HTTPException, Request, Response, UploadFile, File, Form
 from fastapi.responses import RedirectResponse
 
 import auth
+import storage
 
 # --- Google OAuth ---
-# Без переменных окружения вход через Google просто не показывается:
+#
+# Ключи берутся из переменных окружения, а если их нет — из таблицы
+# app_settings, куда их можно вписать прямо в админке. Так настройка
+# не требует передеплоя: на Railway правка переменных перезапускает
+# контейнер, а это лишний простой ради одной пары строк.
+#
+# Без ключей кнопка входа через Google просто не показывается,
 # приложение остаётся работоспособным с обычным паролем.
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
-UPLOAD_DIR = "uploads"
+
+async def google_credentials(app) -> tuple:
+    """Актуальная пара ключей: переменные окружения имеют приоритет."""
+    if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+        return GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+
+    async with app.state.db.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT key, value FROM app_settings WHERE key = ANY($1)",
+            ["google_client_id", "google_client_secret"],
+        )
+    values = {r["key"]: r["value"] for r in rows}
+    return values.get("google_client_id", ""), values.get("google_client_secret", "")
+
+# Тот же каталог, что у остальных загрузок: Volume на Railway
+# либо локальная папка (storage.py)
+UPLOAD_DIR = storage.UPLOAD_DIR
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -53,6 +76,20 @@ def _set_session(response: Response, data: dict) -> None:
     )
 
 
+def _redirect_uri(request: Request) -> str:
+    """Адрес возврата от Google.
+
+    Строится из запроса, а не из настройки: тот же код работает
+    и локально, и на Railway. За обратным прокси Railway схема
+    приходит http — поэтому на проде принудительно https, иначе
+    адрес не совпадёт с зарегистрированным в Google Console.
+    """
+    base = str(request.base_url).rstrip("/")
+    if os.getenv("COOKIE_SECURE") == "1" and base.startswith("http://"):
+        base = "https://" + base[len("http://"):]
+    return base + "/api/auth/google/callback"
+
+
 def require_superadmin(request: Request) -> None:
     session = auth.read_session(request.cookies.get(auth.SESSION_COOKIE, ""))
     if not session or session.get("role") != "superadmin":
@@ -68,7 +105,8 @@ def register_auth_routes(app):
     async def me(request: Request):
         session = auth.read_session(request.cookies.get(auth.SESSION_COOKIE, ""))
         if not session:
-            return {"authenticated": False, "google_enabled": bool(GOOGLE_CLIENT_ID)}
+            client_id, secret = await google_credentials(app)
+            return {"authenticated": False, "google_enabled": bool(client_id and secret)}
 
         if session.get("role") == "superadmin":
             return {"authenticated": True, "role": "superadmin", "name": "Администратор"}
@@ -128,12 +166,13 @@ def register_auth_routes(app):
     # -------------------------------------------------------------------
     @app.get("/api/auth/google")
     async def google_start(request: Request):
-        if not GOOGLE_CLIENT_ID:
+        client_id, _ = await google_credentials(app)
+        if not client_id:
             raise HTTPException(status_code=503, detail="Вход через Google не настроен")
 
-        redirect_uri = str(request.base_url).rstrip("/") + "/api/auth/google/callback"
+        redirect_uri = _redirect_uri(request)
         params = {
-            "client_id": GOOGLE_CLIENT_ID,
+            "client_id": client_id,
             "redirect_uri": redirect_uri,
             "response_type": "code",
             "scope": "openid email profile",
@@ -150,14 +189,16 @@ def register_auth_routes(app):
 
         import httpx
 
-        redirect_uri = str(request.base_url).rstrip("/") + "/api/auth/google/callback"
+        client_id, client_secret = await google_credentials(app)
+        redirect_uri = _redirect_uri(request)
+
         async with httpx.AsyncClient(timeout=15) as client:
             token_res = await client.post(
                 "https://oauth2.googleapis.com/token",
                 data={
                     "code": code,
-                    "client_id": GOOGLE_CLIENT_ID,
-                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
                     "redirect_uri": redirect_uri,
                     "grant_type": "authorization_code",
                 },
@@ -321,6 +362,64 @@ def register_auth_routes(app):
         if not row:
             raise HTTPException(status_code=404, detail="Организация не найдена")
         return {"status": "deleted"}
+
+    # -------------------------------------------------------------------
+    # Настройка входа через Google из админки
+    # -------------------------------------------------------------------
+    @app.get("/api/admin/google")
+    async def get_google_settings(request: Request):
+        require_superadmin(request)
+        client_id, secret = await google_credentials(app)
+
+        return {
+            # Секрет наружу не отдаём — только факт, что он задан
+            "client_id": client_id,
+            "secret_set": bool(secret),
+            "configured": bool(client_id and secret),
+            # Из переменных окружения ключи не переопределить через API
+            "locked_by_env": bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET),
+            # Готовый адрес для вставки в Google Console
+            "redirect_uri": _redirect_uri(request),
+        }
+
+    @app.put("/api/admin/google")
+    async def set_google_settings(request: Request, data: dict):
+        require_superadmin(request)
+
+        if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+            raise HTTPException(
+                status_code=409,
+                detail="Ключи заданы переменными окружения — правьте их на хостинге",
+            )
+
+        client_id = (data.get("client_id") or "").strip()
+        secret = (data.get("client_secret") or "").strip()
+
+        async with app.state.db.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute("""
+                    INSERT INTO app_settings (key, value, updated_at)
+                    VALUES ('google_client_id', $1, now())
+                    ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=now()
+                """, client_id or None)
+
+                # Пустое поле секрета означает «не менять»: он не
+                # показывается в форме, и стирать его при каждом
+                # сохранении названия было бы неожиданно.
+                if secret:
+                    await conn.execute("""
+                        INSERT INTO app_settings (key, value, updated_at)
+                        VALUES ('google_client_secret', $1, now())
+                        ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=now()
+                    """, secret)
+                elif not client_id:
+                    # Очистили Client ID — убираем и секрет
+                    await conn.execute(
+                        "DELETE FROM app_settings WHERE key='google_client_secret'"
+                    )
+
+        new_id, new_secret = await google_credentials(app)
+        return {"configured": bool(new_id and new_secret)}
 
     @app.post("/api/admin/organizations/{org_id}/logo")
     async def upload_logo(org_id: int, request: Request, logo: UploadFile = File(...)):
