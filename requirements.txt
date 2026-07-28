@@ -4,3 +4,4 @@ asyncpg
 pydantic
 python-multipart
 httpx
+openpyxl

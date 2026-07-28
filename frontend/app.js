@@ -803,6 +803,61 @@ function downloadIncome() {
     };
 }
 
+/* ---------------------------------------------------------------------
+   Выгрузка объекта в XLSX
+
+   Файл собирает сервер, здесь только запрос и сохранение. Через fetch,
+   а не переходом по ссылке: иначе ошибка (нет объекта, истекла сессия)
+   открылась бы страницей с JSON вместо понятного сообщения.
+   --------------------------------------------------------------------- */
+function filenameFromDisposition(header, fallback) {
+    if (!header) return fallback;
+    // filename* с кириллицей идёт первым, обычный filename — запасной
+    const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(header);
+    if (utf8) {
+        try { return decodeURIComponent(utf8[1]); } catch { /* испорченный заголовок */ }
+    }
+    const plain = /filename="([^"]+)"/i.exec(header);
+    return plain ? plain[1] : fallback;
+}
+
+async function exportObjectXlsx(btn) {
+    if (!selectedId) {
+        uiAlert('Сначала выберите объект');
+        return;
+    }
+
+    const wasDisabled = btn.disabled;
+    btn.disabled = true;
+    try {
+        const res = await fetch(`/objects/${selectedId}/export/xlsx`);
+        if (!res.ok) {
+            const detail = await res.json().catch(() => null);
+            throw new Error(detail?.detail || `Ошибка ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        const name = filenameFromDisposition(
+            res.headers.get('Content-Disposition'), 'Отчёт.xlsx'
+        );
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        // Освобождаем память не сразу: Safari обрывает скачивание,
+        // если ссылку отозвать в том же кадре
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+        uiAlert('Не удалось скачать файл: ' + err.message);
+    } finally {
+        btn.disabled = wasDisabled;
+    }
+}
+
 // Download Button Logic
 document.addEventListener('DOMContentLoaded', () => {
     const downloadBtn = document.getElementById('download-income');
@@ -811,6 +866,13 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadIncome();
         };
     }
+    // Выгрузка в Excel. Кнопка стоит во всех трёх вкладках, но файл
+    // всегда один и тот же — с листами «Приход», «Бюджет» и «Расходы»:
+    // объект разбирают целиком, а не по одной таблице.
+    document.querySelectorAll('.js-export-xlsx').forEach(btn => {
+        btn.onclick = () => exportObjectXlsx(btn);
+    });
+
     // Кнопка "Скачать" для анализа — вызывает уже существующий экспортный метод
     const downloadAnalysisBtn = document.getElementById('download-analysis');
     if (downloadAnalysisBtn) {

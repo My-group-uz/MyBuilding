@@ -888,3 +888,6 @@ exec(open(os.path.join(_BASE_DIR, "budget_api.py"), encoding="utf-8").read())
 # === Expense API ===
 exec(open(os.path.join(_BASE_DIR, "expense_api.py"), encoding="utf-8").read())
 
+# === Выгрузка в XLSX ===
+exec(open(os.path.join(_BASE_DIR, "export_api.py"), encoding="utf-8").read())
+
