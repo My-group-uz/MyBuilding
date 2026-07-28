@@ -100,6 +100,47 @@ async def add_expense(resource_id: int, request: Request):
         # Return a 400 error with the message so the frontend can show it
         raise HTTPException(status_code=400, detail=f"Server Error: {str(e)}")
 
+@app.post("/objects/{object_id}/expenses/fill-from-budget")
+async def fill_expenses_from_budget(object_id: int):
+    """Проставить факт по плану для ресурсов, где расхода ещё нет.
+
+    Смета заводится один раз, а расход по большинству позиций совпадает
+    с планом — вручную это сотни одинаковых вводов. Кнопка закрывает
+    рутину, оставляя ручной правкой только те позиции, где факт
+    разошёлся с планом.
+
+    Ресурсы, по которым расход уже заведён, не трогаем: иначе повторное
+    нажатие удвоило бы факт. Нулевые строки пропускаем — это заготовки,
+    а не работа.
+    """
+    async with app.state.db.acquire() as conn:
+        resources = await conn.fetch(
+            """
+            SELECT r.id, r.quantity, r.price
+            FROM budget_resources r
+            JOIN budget_work_types wt ON wt.id = r.work_type_id
+            JOIN budget_stages s ON s.id = wt.stage_id
+            WHERE s.object_id = $1
+              AND (r.quantity > 0 OR r.price > 0)
+              AND NOT EXISTS (SELECT 1 FROM resource_expenses e WHERE e.resource_id = r.id)
+            ORDER BY r.id
+            """,
+            object_id,
+        )
+
+        if resources:
+            today = dtdate.today()
+            await conn.executemany(
+                """INSERT INTO resource_expenses
+                   (resource_id, date, actual_quantity, actual_price, comment)
+                   VALUES ($1, $2, $3, $4, $5)""",
+                [(r["id"], today, r["quantity"], r["price"], "Заполнено по бюджету")
+                 for r in resources],
+            )
+
+    return {"created": len(resources)}
+
+
 # Update expense
 @app.put("/expenses/{expense_id}")
 async def update_expense(expense_id: int, request: Request):

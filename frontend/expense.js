@@ -676,8 +676,54 @@ function downloadExpense() {
     };
 }
 
+/* ---------------------------------------------------------------------
+   Заполнение расхода по бюджету
+
+   Позиции, где расход уже заведён, сервер не трогает — повторное
+   нажатие ничего не удвоит.
+   --------------------------------------------------------------------- */
+async function fillExpensesFromBudget(btn) {
+    if (!selectedExpenseObjectId) {
+        uiAlert('Сначала выберите объект');
+        return;
+    }
+
+    const ok = await uiConfirm(
+        'Проставить план как факт по всем позициям, где расход ещё не заведён? ' +
+        'Уже введённые расходы останутся без изменений.',
+        { title: 'Заполнить по бюджету', confirmText: 'Заполнить' }
+    );
+    if (!ok) return;
+
+    btn.disabled = true;
+    try {
+        const res = await fetch(
+            `/objects/${selectedExpenseObjectId}/expenses/fill-from-budget`, { method: 'POST' }
+        );
+        if (!res.ok) {
+            const detail = await res.json().catch(() => null);
+            throw new Error(detail?.detail || `Ошибка ${res.status}`);
+        }
+
+        const { created } = await res.json();
+        await loadExpenses(selectedExpenseObjectId);
+        uiAlert(created
+            ? `Заполнено позиций: ${created}`
+            : 'Все позиции уже заполнены — добавлять нечего');
+    } catch (err) {
+        uiAlert('Не удалось заполнить: ' + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
 // Обработчики кнопок
 document.addEventListener('DOMContentLoaded', () => {
+    const fillBtn = document.getElementById('fill-expenses');
+    if (fillBtn) {
+        fillBtn.onclick = () => fillExpensesFromBudget(fillBtn);
+    }
+
     // Кнопка "Скачать" для расходов
     const downloadBtn = document.getElementById('download-expense');
     if (downloadBtn) {

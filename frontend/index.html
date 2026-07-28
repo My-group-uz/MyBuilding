@@ -294,6 +294,16 @@
                         <line x1="15" x2="15" y1="9" y2="21" />
                     </svg>
                 </button>
+                <button class="icon-btn" id="fill-expenses"
+                    title="Заполнить расход по бюджету: проставить план как факт там, где расхода ещё нет">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-copy-check-icon lucide-copy-check">
+                        <path d="m12 15 2 2 4-4" />
+                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                    </svg>
+                </button>
             </div>
             <div id="expense-container"></div>
         </div>
@@ -399,15 +409,15 @@
     </div>
 
     <!-- Первым: остальные модули используют uiAlert / uiConfirm / uiPrompt -->
-    <script src="dialog.js?v=18"></script>
-    <script src="app.js?v=18"></script>
-    <script src="budget.js?v=18"></script>
-    <script src="expense.js?v=18"></script>
-    <script src="analysis.js?v=18"></script>
+    <script src="dialog.js?v=19"></script>
+    <script src="app.js?v=19"></script>
+    <script src="budget.js?v=19"></script>
+    <script src="expense.js?v=19"></script>
+    <script src="analysis.js?v=19"></script>
     <!-- После analysis.js: использует его analysisData и работу с фото -->
-    <script src="settings.js?v=18"></script>
+    <script src="settings.js?v=19"></script>
     <!-- После остальных: фильтрует уже отрисованный DOM -->
-    <script src="search.js?v=18"></script>
+    <script src="search.js?v=19"></script>
 </body>
 
 </html>
