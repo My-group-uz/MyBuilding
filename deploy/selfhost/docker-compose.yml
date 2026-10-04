@@ -1,0 +1,56 @@
+name: maruf
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: maruf
+    volumes:
+      - maruf_pg:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d maruf"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3011:8000"
+    environment:
+      PORT: "8000"
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/maruf
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+      COOKIE_SECURE: ${COOKIE_SECURE:-1}
+      UPLOAD_DIR: /data/uploads
+      SUPERADMIN_LOGIN: ${SUPERADMIN_LOGIN:-}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      - maruf_uploads:/data/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  # Keep live volumes from the first self-host bootstrap.
+  maruf_pg:
+    name: maruf_maruf_pg
+    external: true
+  maruf_uploads:
+    name: maruf_maruf_uploads
+    external: true
