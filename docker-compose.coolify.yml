@@ -1,10 +1,20 @@
 # Coolify entrypoint (repo-root contexts). Manual bootstrap still uses deploy/selfhost/.
+#
+# С 2026-10-11 здесь только база. Сам сайт — отдельное приложение Coolify
+# «maruf-web» (Dockerfile, плавная замена без простоя, HEALTHCHECK /health);
+# снаружи к нему ведёт nginx из ~/tunnel на сервере (:3011 → maruf-web:8000).
+# База видна сайту в общей сети coolify как maruf-db; загрузки — том
+# maruf_maruf_uploads. Автовыкладка у этого стека выключена (перезапускает базу).
 name: maruf
 
 services:
   db:
     image: postgres:18
     restart: unless-stopped
+    networks:
+      default: {}
+      coolify:
+        aliases: [maruf-db]
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
@@ -18,39 +28,11 @@ services:
       retries: 20
       start_period: 15s
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - "3011:8000"
-    environment:
-      PORT: "8000"
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/maruf
-      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
-      COOKIE_SECURE: ${COOKIE_SECURE:-1}
-      UPLOAD_DIR: /data/uploads
-      SUPERADMIN_LOGIN: ${SUPERADMIN_LOGIN:-}
-      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-    volumes:
-      - maruf_uploads:/data/uploads
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\""]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+networks:
+  coolify:
+    external: true
 
 volumes:
   maruf_pg:
     name: maruf_maruf_pg
-    external: true
-  maruf_uploads:
-    name: maruf_maruf_uploads
     external: true
